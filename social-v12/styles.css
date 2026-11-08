@@ -140,3 +140,18 @@ html[data-theme="dark"] .source-preview,html[data-theme="dark"] .share-inline,ht
 html[data-theme="dark"] .source-preview p{color:#e6f2ff}
 html[data-theme="dark"] .detail-stats{background:#1b2940}
 @media(max-width:620px){.repost-card{padding:14px}.source-preview{padding:12px}.detail-hero{padding:20px 17px}.detail-stats{gap:8px;font-size:11px}.accent-choices{gap:5px}.accent-choice{font-size:10px}.post-open-row{flex-wrap:wrap}}
+
+/* UniSync 1.4 hotfix: explicit entry, global chat join, and visible notifications */
+.entry-card{max-width:460px}
+.entry-user{display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--pale);padding:13px;margin:18px 0;border-radius:14px}
+.entry-user>div:last-child{display:flex;flex-direction:column;gap:5px}
+.entry-user small{color:var(--muted)}
+.entry-btn{width:100%;margin-bottom:9px}
+.chat-join{flex:1;min-height:350px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:12px;text-align:center}
+.chat-join .empty-icon{font-size:43px}.chat-join h3{font-size:19px;margin:0}.chat-join p{font-size:13px;line-height:1.6;color:var(--muted);max-width:370px;margin:0}
+.chat-join .btn{margin-top:5px}
+html[data-theme="dark"] .entry-user{background:#263651}
+html[data-theme="dark"] .chat-join{background:#101b2b;color:#ecf3ff}
+.notice-item strong{font-weight:800}
+.notice-item:focus-visible,.chat-join button:focus-visible{outline:3px solid var(--violet);outline-offset:2px}
+@media(max-width:560px){.chat-join{min-height:310px;padding:22px}.entry-card{max-width:100%}}

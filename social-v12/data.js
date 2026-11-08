@@ -19,7 +19,7 @@ const sample = () => ({
   follows:[],commentLikes:[],shares:[],receipts:[],
   likes:[{id:'p1_theo',postId:'p1',userId:'theo'},{id:'p1_bruna',postId:'p1',userId:'bruna'},{id:'p2_lia',postId:'p2',userId:'lia'}],
   rooms:[
-    {id:'ufabc-global',name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:'me',members:['me','lia','theo','bruna'],createdAt:now-1000*60*9},
+    {id:'ufabc-global',name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:'me',members:['lia','theo'],createdAt:now-1000*60*9},
     {id:'r1',name:'Café & Conversa',description:'Uma comunidade aberta para conhecer gente nova.',visibility:'public',kind:'group',ownerId:'lia',members:['lia','theo','bruna'],createdAt:now-1000*60*800},
     {id:'r2',name:'Projetos de Engenharia',description:'Espaço privado para trocar projetos e materiais.',visibility:'private',kind:'group',ownerId:'me',members:['me','theo'],createdAt:now-1000*60*600},
     {id:'r3',name:'Você e Lia',description:'',visibility:'direct',kind:'direct',ownerId:'me',members:['me','lia'],createdAt:now-1000*60*60}
