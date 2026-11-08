@@ -18,6 +18,7 @@ const sample = () => ({
   comments:[{id:'c1',postId:'p1',authorId:'theo',text:'Calendário visual e blocos curtos de foco ajudam bastante!',createdAt:now-1000*60*35}],
   likes:[{id:'p1_theo',postId:'p1',userId:'theo'},{id:'p1_bruna',postId:'p1',userId:'bruna'},{id:'p2_lia',postId:'p2',userId:'lia'}],
   rooms:[
+    {id:'ufabc-global',name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:'me',members:['me','lia','theo','bruna'],createdAt:now-1000*60*9},
     {id:'r1',name:'Café & Conversa',description:'Uma comunidade aberta para conhecer gente nova.',visibility:'public',kind:'group',ownerId:'lia',members:['lia','theo','bruna'],createdAt:now-1000*60*800},
     {id:'r2',name:'Projetos de Engenharia',description:'Espaço privado para trocar projetos e materiais.',visibility:'private',kind:'group',ownerId:'me',members:['me','theo'],createdAt:now-1000*60*600},
     {id:'r3',name:'Você e Lia',description:'',visibility:'direct',kind:'direct',ownerId:'me',members:['me','lia'],createdAt:now-1000*60*60}
@@ -36,12 +37,17 @@ export async function createAdapter(onData,onAuth,onError){
     let data;
     try { data = JSON.parse(localStorage.getItem(KEY)) || sample(); } catch { data = sample(); }
     let current = localStorage.getItem(SESSION) || 'me';
-    const notify = () => { Object.keys(data).forEach(k=>onData(k,clone(data[k]))); onAuth({id:current,mode:'demo'}); };
+    const notify = () => { Object.keys(data).forEach(k=>onData(k,clone(data[k]))); onData('legacyMine',clone(data.legacyPosts||[]));onAuth({id:current,mode:'demo'}); };
     const save = () => { try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){onError('Armazenamento local cheio. Reduza o tamanho das imagens.');} notify(); };
     window.addEventListener('storage',e=>{if(e.key===KEY){try{data=JSON.parse(e.newValue)||sample();notify();}catch{}} if(e.key===SESSION){current=e.newValue||'me';notify();}});
     const api={mode:'demo',
-      login:async()=>{},register:async()=>{},signInGoogle:async()=>{},logout:async()=>{},
+      login:async()=>{},register:async()=>{},signInGoogle:async()=>{},logout:async()=>{},resetPassword:async()=>{},
       chooseDemoUser:async id=>{if(!data.profiles.some(x=>x.id===id))return;current=id;localStorage.setItem(SESSION,id);notify();},
+      legacyPost:async(x,id)=>{const old=data.legacyPosts||(data.legacyPosts=[]);if(id){const o=old.find(z=>z.id===id);if(o)Object.assign(o,{titulo:x.title,texto:x.body,cat:x.category,status:'pendente'});}else old.push({id:makeId(),autorUid:current,autorNome:data.profiles.find(z=>z.id===current)?.name||'Estudante',autorUni:'UFABC',titulo:x.title,texto:x.body,cat:x.category,status:'pendente',data:Date.now()});save();},
+      legacyStatus:async(id,status)=>{const old=data.legacyPosts||[];const o=old.find(z=>z.id===id);if(o)o.status=status;save();},
+      legacyDelete:async id=>{data.legacyPosts=(data.legacyPosts||[]).filter(z=>z.id!==id);save();},
+      addExpense:async x=>{data.expenses=(data.expenses||[]);data.expenses.push({id:makeId(),desc:x.description,valor:x.amount,cat:x.category,data:Date.now()});save();},
+      deleteExpense:async id=>{data.expenses=(data.expenses||[]).filter(z=>z.id!==id);save();},
       saveProfile:async updates=>{const i=data.profiles.findIndex(x=>x.id===current);if(i>=0){data.profiles[i]={...data.profiles[i],...updates};save();}},
       createPost:async x=>{data.posts.unshift({id:makeId(),authorId:current,...x,createdAt:Date.now()});save();},
       comment:async(postId,text)=>{data.comments.push({id:makeId(),postId,authorId:current,text,createdAt:Date.now()});save();},
@@ -55,9 +61,9 @@ export async function createAdapter(onData,onAuth,onError){
       uploadImage:async file=>resizeDataUrl(file),
       resetDemo:async()=>{data=sample();save();}
     };
-    notify();return api;
+    onData('legacyRole','aluno');if(!data.legacyPosts)data.legacyPosts=[];if(!data.expenses)data.expenses=[];notify();onData('legacyMine',data.legacyPosts);return api;
   }
-  const [{initializeApp},{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,signOut},{getFirestore,collection,doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,where,limit,serverTimestamp,arrayUnion},{getStorage,ref,uploadBytes,getDownloadURL}] = await Promise.all([
+  const [{initializeApp},{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut},{getFirestore,collection,doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,where,limit,serverTimestamp,arrayUnion},{getStorage,ref,uploadBytes,getDownloadURL}] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js'),
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js'),
@@ -78,13 +84,21 @@ export async function createAdapter(onData,onAuth,onError){
     user=u;
     try{
       const p=doc(db,col.profiles,u.uid),existing=await getDoc(p);
+      // Usuários antigos, gastos e mural continuam na mesma base sem migração ou exclusão.
+      let legacy={};try{const old=await getDoc(doc(db,'users',u.uid));if(old.exists())legacy=old.data();}catch(e){console.warn('Perfil antigo indisponível',e);}
       if(!existing.exists()){
-        // Lê campos antigos apenas como origem para o NOVO perfil público; nunca edita users/{uid}.
-        let legacy={};try{const old=await getDoc(doc(db,'users',u.uid));if(old.exists())legacy=old.data();}catch(e){console.warn('Perfil antigo indisponível',e);}
         await setDoc(p,{name:legacy.nome||u.displayName||u.email?.split('@')[0]||'Estudante',username:'aluno'+u.uid.slice(0,6),university:legacy.universidade||'Universidade',bio:'',avatarUrl:'',bannerUrl:'',tags:[],createdAt:serverTimestamp()});
       }
       if(user?.uid!==u.uid)return;
       onAuth({id:u.uid,mode:'firebase'});
+      onData('legacyRole',legacy.role||'aluno');
+      unsubs.push(onSnapshot(collection(db,'users',u.uid,'gastos'),snap=>onData('expenses',snap.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Não foi possível consultar os gastos: '+e.message)));
+      unsubs.push(onSnapshot(query(collection(db,'posts'),where('autorUid','==',u.uid),limit(200)),snap=>onData('legacyMine',snap.docs.map(d=>({id:d.id,...d.data()}))),e=>console.warn('Mural próprio indisponível',e)));
+      if(legacy.role==='moderador')unsubs.push(onSnapshot(query(collection(db,'posts'),limit(300)),snap=>onData('legacyReview',snap.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Falha ao consultar moderação: '+e.message)));
+      // A primeira conta verificada cria o grupo público UFABC se ele ainda não existir.
+      // Todas as outras contas recebem a sala automaticamente pela busca de grupos públicos.
+      const globalRef=doc(db,col.rooms,'ufabc-global');
+      try{const global=await getDoc(globalRef);if(!global.exists())await setDoc(globalRef,{name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:u.uid,members:[u.uid],createdAt:serverTimestamp()});}catch(e){console.warn('Chat UFABC: '+e.message);}
       for (const name of ['profiles','posts','comments','likes']) listen(name,query(collection(db,col[name]),limit(300)));
       // Publicações antigas APROVADAS continuam visíveis no feed social em modo leitura.
       unsubs.push(onSnapshot(query(collection(db,'posts'),where('status','==','aprovado'),limit(150)),snap=>onData('legacyPosts',snap.docs.map(d=>{
@@ -99,7 +113,12 @@ export async function createAdapter(onData,onAuth,onError){
     login:async(e,p)=>{if(!validEmail(e))throw Error('Utilize seu e-mail institucional de uma universidade aceita.');await signInWithEmailAndPassword(auth,e,p);if(!auth.currentUser?.emailVerified){await signOut(auth);throw Error('Confirme seu e-mail antes de entrar.');}},
     register:async(e,p)=>{if(!validEmail(e))throw Error('Utilize seu e-mail institucional de uma universidade aceita.');const cred=await createUserWithEmailAndPassword(auth,e,p);await sendEmailVerification(cred.user);await signOut(auth);},
     signInGoogle:async()=>{const result=await signInWithPopup(auth,new GoogleAuthProvider());if(!validEmail(result.user.email)){await signOut(auth);throw Error('Utilize uma conta institucional de universidade aceita.');}},
-    logout:async()=>signOut(auth),chooseDemoUser:async()=>{},resetDemo:async()=>{},
+    logout:async()=>signOut(auth),resetPassword:async email=>{if(!validEmail(email))throw Error('Use seu e-mail institucional.');await sendPasswordResetEmail(auth,email);},chooseDemoUser:async()=>{},resetDemo:async()=>{},
+    legacyPost:async(x,id)=>{const payload={titulo:x.title,texto:x.body,cat:x.category,status:'pendente'};if(id)await updateDoc(doc(db,'posts',id),payload);else await addDoc(collection(db,'posts'),{...payload,autorUid:requireUser(),autorNome:(await getDoc(doc(db,'users',requireUser()))).data()?.nome||'',autorUni:(await getDoc(doc(db,'users',requireUser()))).data()?.universidade||'',data:serverTimestamp()});},
+    legacyStatus:async(id,status)=>updateDoc(doc(db,'posts',id),{status}),
+    legacyDelete:async id=>deleteDoc(doc(db,'posts',id)),
+    addExpense:async x=>addDoc(collection(db,'users',requireUser(),'gastos'),{desc:x.description,valor:x.amount,cat:x.category,data:serverTimestamp()}),
+    deleteExpense:async id=>deleteDoc(doc(db,'users',requireUser(),'gastos',id)),
     saveProfile:async updates=>updateDoc(doc(db,col.profiles,requireUser()),updates),
     createPost:async x=>{await addDoc(collection(db,col.posts),{...x,authorId:requireUser(),createdAt:serverTimestamp()});},
     comment:async(postId,text)=>{await addDoc(collection(db,col.comments),{postId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
@@ -110,7 +129,7 @@ export async function createAdapter(onData,onAuth,onError){
     startDirect:async uid=>{const mine=requireUser(),ids=[mine,uid].sort(),id='dm_'+ids.join('_'),r=doc(db,col.rooms,id);if([...publicRooms,...myRooms].some(x=>x.id===id))return id;await setDoc(r,{name:'Conversa privada',description:'',visibility:'direct',kind:'direct',ownerId:mine,members:ids,createdAt:serverTimestamp()});return id;},
     sendMessage:async(roomId,text)=>{await addDoc(collection(db,col.messages),{roomId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
     watchMessages:id=>{roomUnsub();onData('messages',[]);if(!id){roomUnsub=()=>{};return;}roomUnsub=onSnapshot(query(collection(db,col.messages),where('roomId','==',id),limit(300)),s=>onData('messages',s.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Erro ao carregar mensagens: '+e.message));},
-    uploadImage:async(file,kind)=>{const uid=requireUser();const blob=await compressImage(file,1500,.84);const path='v12/'+uid+'/'+kind+'/'+makeId()+'.jpg';const storageRef=ref(storage,path);await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});return getDownloadURL(storageRef);}
+    uploadImage:async(file,kind)=>{if(window.UNISYNC_V12_STORAGE_ENABLED!==true)throw Error('Envio de imagens ainda indisponível: o responsável precisa ativar e configurar o Firebase Storage.');const uid=requireUser();const blob=await compressImage(file,1500,.84);const path='v12/'+uid+'/'+kind+'/'+makeId()+'.jpg';const storageRef=ref(storage,path);await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});return getDownloadURL(storageRef);}
   };
 }
 function compressImage(file,maxWidth=1500,quality=.8){

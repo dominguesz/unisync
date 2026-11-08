@@ -12,3 +12,23 @@
 .nav-link.active,.nav-link:hover{background:#EAF6FF;color:#0B6FC2}
 .hero{background:linear-gradient(112deg,#0B6FC2,#1A8FE3 65%,#3CCFE0)}
 .profile-cover{background:linear-gradient(105deg,#0B6FC2,#1A8FE3 60%,#3CCFE0);background-size:cover;background-position:center}
+
+/* UniSync social e recursos originais: identidade azul e logotipo oficial */
+.legacy-logo{display:block;width:132px;height:50px;flex-shrink:0;-webkit-mask:url('../logo.png') center/contain no-repeat;mask:url('../logo.png') center/contain no-repeat;background:linear-gradient(180deg,#1A8FE3,#5EE4F5)}
+.global-strip{padding:16px 18px;border-radius:16px;background:linear-gradient(120deg,#0B6FC2,#218CE3);color:#fff;display:flex;gap:14px;align-items:center;justify-content:space-between;margin-bottom:16px}
+.global-strip small{display:block;opacity:.92;font-size:12px;margin-top:5px}
+.global-strip .btn{background:#fff;color:#0B6FC2;white-space:nowrap}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+button.pill{cursor:pointer;border:1px solid var(--border,#ddd);background:var(--card,#fff);color:var(--text,#222)}
+button.selected-pill{background:#0B6FC2;color:#fff}
+.legacy-post{margin-top:14px}.legacy-post h3{margin:12px 0 6px}.legacy-post .post-body{white-space:pre-line}
+.legacy-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.finance-total{border-radius:18px;background:linear-gradient(130deg,#1A8FE3,#0B6FC2);color:#fff;padding:24px;margin:15px 0;display:flex;flex-direction:column;gap:6px}
+.finance-total strong{font-size:30px}
+.expense-cat{padding:8px 0}.expense-track{height:9px;background:#e8eff8;border-radius:30px;overflow:hidden;margin-top:6px}.expense-track div{height:100%;background:linear-gradient(90deg,#0B6FC2,#3CCFE0)}
+.expense-line{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border,#ddd)}
+.expense-line>div{display:flex;gap:6px;flex-direction:column}.expense-line>div:last-child{align-items:end;flex-direction:row}
+.expense-line small{color:var(--muted,#777)}
+.notice{padding:12px;background:#e5f3ff;color:#0B6FC2;border-radius:12px}
+@media(max-width:780px){.mobile-nav{overflow-x:auto!important;justify-content:flex-start!important;scrollbar-width:thin}.mobile-nav button{flex:0 0 76px!important;min-width:76px}.global-strip{flex-wrap:wrap}.global-strip .btn{width:100%}.legacy-logo{width:116px;height:46px}}
+.global-strip small{color:#fff!important;opacity:.95}

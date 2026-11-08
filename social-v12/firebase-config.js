@@ -11,3 +11,6 @@ window.UNISYNC_V12_FIREBASE_CONFIG = {
   messagingSenderId: '275111684381',
   appId: '1:275111684381:web:5702002681d04f9e9a99f4'
 };
+
+// Altere para true somente depois de ativar o Storage e publicar regras seguras.
+window.UNISYNC_V12_STORAGE_ENABLED = false;
