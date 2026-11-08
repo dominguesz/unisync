@@ -49,9 +49,11 @@ export async function createAdapter(onData,onAuth,onError){
       addExpense:async x=>{data.expenses=(data.expenses||[]);data.expenses.push({id:makeId(),desc:x.description,valor:x.amount,cat:x.category,data:Date.now()});save();},
       deleteExpense:async id=>{data.expenses=(data.expenses||[]).filter(z=>z.id!==id);save();},
       saveProfile:async updates=>{const i=data.profiles.findIndex(x=>x.id===current);if(i>=0){data.profiles[i]={...data.profiles[i],...updates};save();}},
-      createPost:async x=>{data.posts.unshift({id:makeId(),authorId:current,...x,createdAt:Date.now()});save();},
+      createPost:async x=>{data.posts.unshift({id:makeId(),authorId:current,...x,status:'pendente',createdAt:Date.now()});save();},
+      socialStatus:async(id,status)=>{const p=data.posts.find(x=>x.id===id);if(p){p.status=status;save();}},
+      socialDelete:async id=>{data.posts=data.posts.filter(x=>x.id!==id);save();},
       comment:async(postId,text)=>{data.comments.push({id:makeId(),postId,authorId:current,text,createdAt:Date.now()});save();},
-      toggleLike:async postId=>{const id=postId+'_'+current; const i=data.likes.findIndex(x=>x.id===id);if(i>=0)data.likes.splice(i,1);else data.likes.push({id,postId,userId:current});save();},
+      toggleLike:async postId=>{const id=postId+'_'+current; const i=data.likes.findIndex(x=>x.id===id);if(i>=0)data.likes.splice(i,1);else data.likes.push({id,postId,userId:current,createdAt:Date.now()});save();},
       createRoom:async x=>{const id=makeId();data.rooms.push({id,...x,ownerId:current,members:[...new Set([current,...x.members])],createdAt:Date.now()});save();return id;},
       joinRoom:async id=>{const r=data.rooms.find(x=>x.id===id);if(!r||r.visibility!=='public')throw Error('Grupo não é público.');if(!r.members.includes(current))r.members.push(current);save();},
       addMember:async(id,uid)=>{const r=data.rooms.find(x=>x.id===id);if(!r||r.ownerId!==current||r.kind==='direct')throw Error('Somente o criador pode convidar participantes.');if(!r.members.includes(uid))r.members.push(uid);save();},
@@ -99,7 +101,18 @@ export async function createAdapter(onData,onAuth,onError){
       // Todas as outras contas recebem a sala automaticamente pela busca de grupos públicos.
       const globalRef=doc(db,col.rooms,'ufabc-global');
       try{const global=await getDoc(globalRef);if(!global.exists())await setDoc(globalRef,{name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:u.uid,members:[u.uid],createdAt:serverTimestamp()});}catch(e){console.warn('Chat UFABC: '+e.message);}
-      for (const name of ['profiles','posts','comments','likes']) listen(name,query(collection(db,col[name]),limit(300)));
+      for (const name of ['profiles','comments','likes']) listen(name,query(collection(db,col[name]),limit(300)));
+      // Consultas separadas para publicações aprovadas, do autor e dos moderadores.
+      let publicPosts=[],ownPosts=[],reviewPosts=[];
+      const notifyPosts=()=>onData('posts',[...new Map([...publicPosts,...ownPosts,...reviewPosts].map(post=>[post.id,post])).values()]);
+      const watchPosts=(q,which)=>unsubs.push(onSnapshot(q,snap=>{
+        const items=snap.docs.map(d=>({id:d.id,...d.data()}));
+        if(which==='public')publicPosts=items;else if(which==='mine')ownPosts=items;else reviewPosts=items;
+        notifyPosts();
+      },e=>onError('Falha ao carregar publicações: '+e.message)));
+      watchPosts(query(collection(db,col.posts),where('status','==','aprovado'),limit(300)),'public');
+      watchPosts(query(collection(db,col.posts),where('authorId','==',u.uid),limit(300)),'mine');
+      if(legacy.role==='moderador')watchPosts(query(collection(db,col.posts),limit(300)),'moderator');
       // Publicações antigas APROVADAS continuam visíveis no feed social em modo leitura.
       unsubs.push(onSnapshot(query(collection(db,'posts'),where('status','==','aprovado'),limit(150)),snap=>onData('legacyPosts',snap.docs.map(d=>{
         const o=d.data();return {id:'legacy_'+d.id,authorId:o.autorUid||'',legacy:true,legacyAuthorName:o.autorNome||'Estudante',legacyUni:o.autorUni||'',title:o.titulo||'Publicação',body:o.texto||'',tags:[o.cat||'Mural'],coverUrl:'',createdAt:o.data};
@@ -120,9 +133,11 @@ export async function createAdapter(onData,onAuth,onError){
     addExpense:async x=>addDoc(collection(db,'users',requireUser(),'gastos'),{desc:x.description,valor:x.amount,cat:x.category,data:serverTimestamp()}),
     deleteExpense:async id=>deleteDoc(doc(db,'users',requireUser(),'gastos',id)),
     saveProfile:async updates=>updateDoc(doc(db,col.profiles,requireUser()),updates),
-    createPost:async x=>{await addDoc(collection(db,col.posts),{...x,authorId:requireUser(),createdAt:serverTimestamp()});},
+    createPost:async x=>{await addDoc(collection(db,col.posts),{...x,authorId:requireUser(),status:'pendente',createdAt:serverTimestamp()});},
+    socialStatus:async(id,status)=>updateDoc(doc(db,col.posts,id),{status}),
+    socialDelete:async id=>deleteDoc(doc(db,col.posts,id)),
     comment:async(postId,text)=>{await addDoc(collection(db,col.comments),{postId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
-    toggleLike:async postId=>{const uid=requireUser(),id=postId+'_'+uid,p=doc(db,col.likes,id);const snap=await getDoc(p);if(snap.exists())await deleteDoc(p);else await setDoc(p,{postId,userId:uid});},
+    toggleLike:async postId=>{const uid=requireUser(),id=postId+'_'+uid,p=doc(db,col.likes,id);const snap=await getDoc(p);if(snap.exists())await deleteDoc(p);else await setDoc(p,{postId,userId:uid,createdAt:serverTimestamp()});},
     createRoom:async x=>{const uid=requireUser();const refRoom=await addDoc(collection(db,col.rooms),{...x,ownerId:uid,members:[...new Set([uid,...x.members])],createdAt:serverTimestamp()});return refRoom.id;},
     joinRoom:async id=>updateDoc(doc(db,col.rooms,id),{members:arrayUnion(requireUser())}),
     addMember:async(id,uid)=>updateDoc(doc(db,col.rooms,id),{members:arrayUnion(uid)}),
