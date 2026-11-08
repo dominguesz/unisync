@@ -91,3 +91,4 @@ html[data-theme="dark"] .auth-card p,html[data-theme="dark"] .hint,html[data-the
 html[data-theme="dark"] .hero,html[data-theme="dark"] .global-strip,html[data-theme="dark"] .finance-total{color:#fff}
 html[data-theme="dark"] .message.mine .message-bubble{background:#176fc5;color:white}
 @media(max-width:560px){.profile-buttons{justify-content:flex-end}.profile-buttons .btn{padding:9px 10px;font-size:12px}.theme-btn{width:34px;height:34px;flex-basis:34px}}
+html[data-theme="dark"] .chat-messages{background:#101b2b!important;color:#e7edf9!important} html[data-theme="dark"] .message:not(.mine) .message-bubble{background:#293a55!important;color:#f0f5ff!important} html[data-theme="dark"] .chat-panel .empty{color:#b9c7da!important}
