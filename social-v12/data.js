@@ -16,7 +16,7 @@ const sample = () => ({
     {id:'p3',authorId:'bruna',title:'Se apresentar também faz parte de fazer amigos',body:'Oi! Sou a Bruna e adoro conhecer projetos e histórias de outros estudantes. Conte algo que gosta de fazer fora da faculdade! 💜',tags:['Comunidade'],coverUrl:'',createdAt:now-1000*60*580}
   ],
   comments:[{id:'c1',postId:'p1',authorId:'theo',text:'Calendário visual e blocos curtos de foco ajudam bastante!',createdAt:now-1000*60*35}],
-  follows:[],commentLikes:[],
+  follows:[],commentLikes:[],shares:[],receipts:[],
   likes:[{id:'p1_theo',postId:'p1',userId:'theo'},{id:'p1_bruna',postId:'p1',userId:'bruna'},{id:'p2_lia',postId:'p2',userId:'lia'}],
   rooms:[
     {id:'ufabc-global',name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:'me',members:['me','lia','theo','bruna'],createdAt:now-1000*60*9},
@@ -54,7 +54,9 @@ export async function createAdapter(onData,onAuth,onError){
       socialStatus:async(id,status)=>{const p=data.posts.find(x=>x.id===id);if(p){p.status=status;save();}},
       socialDelete:async id=>{data.posts=data.posts.filter(x=>x.id!==id);save();},
       comment:async(postId,text)=>{data.comments.push({id:makeId(),postId,authorId:current,text,createdAt:Date.now()});save();},
-      toggleFollow:async followingId=>{if(followingId===current)throw Error('Não é possível seguir a si mesmo.');const id=current+'_'+followingId,idx=data.follows.findIndex(f=>f.id===id);if(idx>=0)data.follows.splice(idx,1);else data.follows.push({id,followerId:current,followingId,createdAt:Date.now()});save();},
+      createShare:async x=>{const id=makeId();data.shares.push({id,...x,authorId:current,createdAt:Date.now()});save();return id;},
+      markRoomRead:async roomId=>{const id=roomId+'_'+current,nowRead=Date.now(),r=data.receipts.find(x=>x.id===id);if(r)r.lastReadAt=nowRead;else data.receipts.push({id,roomId,userId:current,lastReadAt:nowRead});save();},
+    toggleFollow:async followingId=>{if(followingId===current)throw Error('Não é possível seguir a si mesmo.');const id=current+'_'+followingId,idx=data.follows.findIndex(f=>f.id===id);if(idx>=0)data.follows.splice(idx,1);else data.follows.push({id,followerId:current,followingId,createdAt:Date.now()});save();},
       toggleCommentLike:async commentId=>{const id=commentId+'_'+current,idx=data.commentLikes.findIndex(l=>l.id===id);if(idx>=0)data.commentLikes.splice(idx,1);else data.commentLikes.push({id,commentId,userId:current,createdAt:Date.now()});save();},
       toggleLike:async postId=>{const id=postId+'_'+current; const i=data.likes.findIndex(x=>x.id===id);if(i>=0)data.likes.splice(i,1);else data.likes.push({id,postId,userId:current,createdAt:Date.now()});save();},
       createRoom:async x=>{const id=makeId();data.rooms.push({id,...x,ownerId:current,members:[...new Set([current,...x.members])],createdAt:Date.now()});save();return id;},
@@ -62,11 +64,11 @@ export async function createAdapter(onData,onAuth,onError){
       addMember:async(id,uid)=>{const r=data.rooms.find(x=>x.id===id);if(!r||r.ownerId!==current||r.kind==='direct')throw Error('Somente o criador pode convidar participantes.');if(!r.members.includes(uid))r.members.push(uid);save();},
       startDirect:async uid=>{const ids=[current,uid].sort();let r=data.rooms.find(r=>r.kind==='direct'&&r.members.length===2&&ids.every(x=>r.members.includes(x)));if(!r){r={id:'dm_'+ids.join('_'),name:'Conversa privada',description:'',visibility:'direct',kind:'direct',ownerId:current,members:ids,createdAt:Date.now()};data.rooms.push(r);save();}return r.id;},
       sendMessage:async(roomId,text)=>{const r=data.rooms.find(x=>x.id===roomId);if(!r||!r.members.includes(current))throw Error('Entre no grupo antes de enviar mensagens.');data.messages.push({id:makeId(),roomId,authorId:current,text,createdAt:Date.now()});save();},
-      watchMessages:()=>()=>{},
+      watchMessages:id=>{onData('messages',clone(id?data.messages.filter(m=>m.roomId===id):[]));onData('receipts',clone(id?data.receipts.filter(r=>r.roomId===id):[]));},
       uploadImage:async file=>resizeDataUrl(file),
       resetDemo:async()=>{data=sample();save();}
     };
-    onData('legacyRole','aluno');if(!data.legacyPosts)data.legacyPosts=[];if(!data.expenses)data.expenses=[];if(!data.follows)data.follows=[];if(!data.commentLikes)data.commentLikes=[];notify();onData('legacyMine',data.legacyPosts);return api;
+    onData('legacyRole','aluno');if(!data.legacyPosts)data.legacyPosts=[];if(!data.expenses)data.expenses=[];if(!data.follows)data.follows=[];if(!data.commentLikes)data.commentLikes=[];if(!data.shares)data.shares=[];if(!data.receipts)data.receipts=[];notify();onData('legacyMine',data.legacyPosts);return api;
   }
   const [{initializeApp},{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut},{getFirestore,collection,doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,where,limit,serverTimestamp,arrayUnion},{getStorage,ref,uploadBytes,getDownloadURL}] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
@@ -77,7 +79,7 @@ export async function createAdapter(onData,onAuth,onError){
   const fb=initializeApp(config);const auth=getAuth(fb),db=getFirestore(fb),storage=getStorage(fb);
   const domains=['usp.br','unicamp.br','unesp.br','unifesp.br','ufscar.br','ufabc.edu.br','fatec.sp.gov.br','ifsp.edu.br','univesp.br'];
   const validEmail=email=>{const domain=String(email||'').toLowerCase().split('@')[1]||'';return domains.some(d=>domain===d||domain.endsWith('.'+d));};
-  const col={profiles:'v12_profiles',posts:'v12_posts',comments:'v12_comments',likes:'v12_likes',rooms:'v12_rooms',messages:'v12_messages',follows:'v12_follows',commentLikes:'v12_comment_likes'};
+  const col={profiles:'v12_profiles',posts:'v12_posts',comments:'v12_comments',likes:'v12_likes',rooms:'v12_rooms',messages:'v12_messages',follows:'v12_follows',commentLikes:'v12_comment_likes',shares:'v12_shares',receipts:'v12_read_receipts'};
   let user=null,unsubs=[],roomUnsub=()=>{},publicRooms=[],myRooms=[];
   const cleanup=()=>{unsubs.forEach(f=>f());unsubs=[];roomUnsub();roomUnsub=()=>{};};
   const listen=(name,q)=>unsubs.push(onSnapshot(q,s=>onData(name,s.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Erro de leitura em '+name+': '+e.message)));
@@ -104,7 +106,7 @@ export async function createAdapter(onData,onAuth,onError){
       // Todas as outras contas recebem a sala automaticamente pela busca de grupos públicos.
       const globalRef=doc(db,col.rooms,'ufabc-global');
       try{const global=await getDoc(globalRef);if(!global.exists())await setDoc(globalRef,{name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:u.uid,members:[u.uid],createdAt:serverTimestamp()});}catch(e){console.warn('Chat UFABC: '+e.message);}
-      for (const name of ['profiles','comments','likes','follows','commentLikes']) listen(name,query(collection(db,col[name]),limit(400)));
+      for (const name of ['profiles','comments','likes','follows','commentLikes','shares']) listen(name,query(collection(db,col[name]),limit(400)));
       // Consultas separadas para publicações aprovadas, do autor e dos moderadores.
       let publicPosts=[],ownPosts=[],reviewPosts=[];
       const notifyPosts=()=>onData('posts',[...new Map([...publicPosts,...ownPosts,...reviewPosts].map(post=>[post.id,post])).values()]);
@@ -140,6 +142,8 @@ export async function createAdapter(onData,onAuth,onError){
     socialStatus:async(id,status)=>updateDoc(doc(db,col.posts,id),{status}),
     socialDelete:async id=>deleteDoc(doc(db,col.posts,id)),
     comment:async(postId,text)=>{await addDoc(collection(db,col.comments),{postId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
+    createShare:async x=>{const uid=requireUser();const share=await addDoc(collection(db,col.shares),{sourceType:x.sourceType,originalId:x.originalId,note:String(x.note||'').slice(0,600),authorId:uid,createdAt:serverTimestamp()});return share.id;},
+    markRoomRead:async roomId=>{if(!roomId)return;const uid=requireUser();await setDoc(doc(db,col.receipts,roomId+'_'+uid),{roomId,userId:uid,lastReadAt:serverTimestamp()},{merge:true});},
     toggleFollow:async followingId=>{const uid=requireUser();if(uid===followingId)throw Error('Não é possível seguir a si mesmo.');const id=uid+'_'+followingId,p=doc(db,col.follows,id),old=await getDoc(p);if(old.exists())await deleteDoc(p);else await setDoc(p,{followerId:uid,followingId,createdAt:serverTimestamp()});},
     toggleCommentLike:async commentId=>{const uid=requireUser(),id=commentId+'_'+uid,p=doc(db,col.commentLikes,id),old=await getDoc(p);if(old.exists())await deleteDoc(p);else await setDoc(p,{commentId,userId:uid,createdAt:serverTimestamp()});},
     toggleLike:async postId=>{const uid=requireUser(),id=postId+'_'+uid,p=doc(db,col.likes,id);const snap=await getDoc(p);if(snap.exists())await deleteDoc(p);else await setDoc(p,{postId,userId:uid,createdAt:serverTimestamp()});},
@@ -148,7 +152,7 @@ export async function createAdapter(onData,onAuth,onError){
     addMember:async(id,uid)=>updateDoc(doc(db,col.rooms,id),{members:arrayUnion(uid)}),
     startDirect:async uid=>{const mine=requireUser(),ids=[mine,uid].sort(),id='dm_'+ids.join('_'),r=doc(db,col.rooms,id);if([...publicRooms,...myRooms].some(x=>x.id===id))return id;await setDoc(r,{name:'Conversa privada',description:'',visibility:'direct',kind:'direct',ownerId:mine,members:ids,createdAt:serverTimestamp()});return id;},
     sendMessage:async(roomId,text)=>{await addDoc(collection(db,col.messages),{roomId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
-    watchMessages:id=>{roomUnsub();onData('messages',[]);if(!id){roomUnsub=()=>{};return;}roomUnsub=onSnapshot(query(collection(db,col.messages),where('roomId','==',id),limit(300)),s=>onData('messages',s.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Erro ao carregar mensagens: '+e.message));},
+    watchMessages:id=>{roomUnsub();onData('messages',[]);onData('receipts',[]);if(!id){roomUnsub=()=>{};return;}const m=onSnapshot(query(collection(db,col.messages),where('roomId','==',id),limit(300)),s=>onData('messages',s.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Erro ao carregar mensagens: '+e.message));const r=onSnapshot(query(collection(db,col.receipts),where('roomId','==',id),limit(300)),s=>onData('receipts',s.docs.map(d=>({id:d.id,...d.data()}))),e=>onError('Erro ao carregar confirmações de leitura: '+e.message));roomUnsub=()=>{m();r();};},
     uploadImage:async(file,kind)=>{if(window.UNISYNC_V12_STORAGE_ENABLED!==true)throw Error('Envio de imagens ainda indisponível: o responsável precisa ativar e configurar o Firebase Storage.');const uid=requireUser();const blob=await compressImage(file,1500,.84);const path='v12/'+uid+'/'+kind+'/'+makeId()+'.jpg';const storageRef=ref(storage,path);await uploadBytes(storageRef,blob,{contentType:'image/jpeg'});return getDownloadURL(storageRef);}
   };
 }
