@@ -80,6 +80,9 @@ textarea{min-height:80px;resize:vertical}
 .x{border:0;background:none;color:var(--muted);padding:4px 8px}
 a.sm{display:inline-block;text-decoration:none;margin-top:4px}
 .hint{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.gbtn{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.ou{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:14px}
+.ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--border)}
 .badge.ex{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
 .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1A8FE3,#4A3FC0);color:#fff;font:700 30px Poppins,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;margin:14px auto}
 </style>
@@ -94,6 +97,8 @@ a.sm{display:inline-block;text-decoration:none;margin-top:4px}
 
     <div class="card" id="formCard">
       <h2 id="title" style="font-size:20px">Entrar</h2>
+      <button class="gbtn" data-a="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.4-4.6 7l7.4 5.7c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar com Google</button>
+      <div class="ou">ou</div>
       <label for="email">E-mail institucional</label>
       <input id="email" type="email" placeholder="seu e-mail institucional" autocomplete="email">
       <small class="hint">Use o e-mail da sua universidade pública paulista.</small>
@@ -127,7 +132,7 @@ a.sm{display:inline-block;text-decoration:none;margin-top:4px}
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import {getFirestore,doc,getDoc,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* ===== 1. CONFIGURAÇÃO DO FIREBASE (projeto unisync) ===== */
@@ -158,7 +163,8 @@ function erroAuth(e){
   const m = {"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.",
     "auth/email-already-in-use":"Esse e-mail já tem conta. Toque em “Já tenho conta”.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
     "auth/too-many-requests":"Muitas tentativas. Espere alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.",
-    "auth/invalid-email":"E-mail inválido.","permission-denied":"Sem permissão. Confira as regras do Firestore."};
+    "auth/invalid-email":"E-mail inválido.","permission-denied":"Sem permissão. Confira as regras do Firestore.",
+    "auth/popup-blocked":"O navegador bloqueou a janela do Google. Libere os pop-ups e tente de novo.","auth/operation-not-allowed":"O login com Google ainda não foi ativado no Firebase."};
   return m[e.code] || "Algo deu errado (" + (e.code || e.message) + ").";
 }
 
@@ -198,6 +204,10 @@ ACT.jaconfirmei = async () => {
   }catch(x){ aviso("msg2", erroAuth(x), "err"); }
 };
 ACT.sair = () => signOut(auth);
+ACT.google = async () => {
+  try{ const p = new GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account"}); await signInWithPopup(auth, p); }
+  catch(x){ if(x.code === "auth/popup-closed-by-user" || x.code === "auth/cancelled-popup-request") return; aviso("msg", erroAuth(x), "err"); }
+};
 
 /* ===== 5. ESTADO DO APP ===== */
 let U = null, P = null, isMod = false, tab = 0, filtro = "Todas", mOpen = false, fOpen = false, avisoOk = "", erro = "", sSec = "Vacinação", dirty = false;
@@ -210,6 +220,10 @@ onAuthStateChanged(auth, user => {
   unsubs.forEach(f => f()); unsubs = []; started = null; U = null; P = null; isMod = false;
   pubMap = {}; meusMap = {}; gastos = []; draft = {};
   if(!user){ show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden"); $("senha").value = ""; return; }
+  if(!emailValido((user.email || "").toLowerCase())){
+    signOut(auth); show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden");
+    aviso("msg", "Essa conta não é de uma universidade pública paulista. Use o e-mail institucional.", "err"); return;
+  }
   if(!user.emailVerified){
     $("sentTo").textContent = user.email; $("msg2").className = "msg";
     $("formCard").classList.add("hidden"); $("verCard").classList.remove("hidden"); show("auth"); return;
