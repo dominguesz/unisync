@@ -57,3 +57,37 @@ button.selected-pill{background:#0B6FC2;color:#fff}
 .notice-item{padding:12px 9px}
 }
 @media(min-width:721px){.more-overlay,.more-drawer{display:none}}
+
+/* UniSync social extras: seguidores, compartilhamento, curtidas e tema */
+.theme-btn{width:38px;height:38px;border:1px solid var(--line);border-radius:12px;background:#f1f8ff;color:var(--ink);font-size:18px;display:grid;place-items:center;cursor:pointer;flex:0 0 38px}
+.auth-card{position:relative}
+.auth-theme{position:absolute;top:15px;right:15px}
+.profile-buttons{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.stat-link{border:0;background:transparent;color:inherit;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 10px;cursor:pointer;border-radius:10px}
+.stat-link:hover{background:#e4f2ff}
+.stat-link b{font-size:20px}
+.stat-link small{font-size:12px;color:var(--muted)}
+.follow-list{display:grid;gap:3px;max-height:60vh;overflow-y:auto;padding-bottom:15px}
+.follow-item{background:none;border:0;border-bottom:1px solid var(--line);padding:12px 8px;display:flex;align-items:center;gap:12px;color:inherit;text-align:left;cursor:pointer}
+.follow-item:hover{background:#f1f8ff}
+.follow-item span{display:grid;gap:3px;flex:1}
+.follow-item small{color:var(--muted)}
+.comment-like{border:0;background:transparent;color:var(--muted);cursor:pointer;margin-top:5px;padding:4px 0;font-size:11px;font-weight:650}
+.comment-like.active{color:var(--violet)}
+/* O tema escuro preserva os destaques azul e ciano do UniSync. */
+html[data-theme="dark"]{color-scheme:dark;--ink:#e7edf9;--muted:#a5b3cd;--pale:#0d1525;--white:#1b2940;--line:#34415a;--shadow:0 15px 35px #02091550;background:#0d1525}
+html[data-theme="dark"] body,html[data-theme="dark"] .shell,html[data-theme="dark"] .main,html[data-theme="dark"] .layout,html[data-theme="dark"] .content{background:#101a2c;color:var(--ink)}
+html[data-theme="dark"] .side,html[data-theme="dark"] .topbar,html[data-theme="dark"] .panel,html[data-theme="dark"] .modal,html[data-theme="dark"] .more-drawer,html[data-theme="dark"] .rail .panel,html[data-theme="dark"] .auth-card,html[data-theme="dark"] .chat-side,html[data-theme="dark"] .chat-panel,html[data-theme="dark"] .notice-item{background:#1b2940;color:var(--ink);border-color:#33435d}
+html[data-theme="dark"] .field,html[data-theme="dark"] input,html[data-theme="dark"] textarea,html[data-theme="dark"] select,html[data-theme="dark"] .topbar-search,html[data-theme="dark"] .composer-trigger,html[data-theme="dark"] .bubble{background:#263651!important;color:#edf4ff!important;border-color:#3a4d6b!important}
+html[data-theme="dark"] input::placeholder,html[data-theme="dark"] textarea::placeholder{color:#b1bdd0}
+html[data-theme="dark"] .nav-link{color:#bdc8df}
+html[data-theme="dark"] .nav-link:hover,html[data-theme="dark"] .nav-link.active,html[data-theme="dark"] .chat-room.selected,html[data-theme="dark"] .chat-room:hover,html[data-theme="dark"] .stat-link:hover,html[data-theme="dark"] .follow-item:hover,html[data-theme="dark"] .notice-item:hover{background:#243f61!important;color:#9ed7ff}
+html[data-theme="dark"] .chat-room,html[data-theme="dark"] .chat-head,html[data-theme="dark"] .chat-panel-head,html[data-theme="dark"] .chat-footer,html[data-theme="dark"] .comment,html[data-theme="dark"] .comments,html[data-theme="dark"] .selection label,html[data-theme="dark"] .composer-footer{background:#1b2940!important;color:#edf4ff;border-color:#354762}
+html[data-theme="dark"] .mobile-nav,html[data-theme="dark"] .more-entry{background:#1b2940!important;color:#cadbfa;border-color:#33435d}
+html[data-theme="dark"] .theme-btn,html[data-theme="dark"] .btn.soft,html[data-theme="dark"] .account-chip,html[data-theme="dark"] button.pill{background:#293e60!important;color:#c7e6ff!important;border-color:#405674}
+html[data-theme="dark"] .post-actions,html[data-theme="dark"] .moderation-actions,html[data-theme="dark"] .expense-line,html[data-theme="dark"] .follow-item{border-color:#354762}
+html[data-theme="dark"] .auth-shell{background:linear-gradient(120deg,#111b32,#24395b)}
+html[data-theme="dark"] .auth-card p,html[data-theme="dark"] .hint,html[data-theme="dark"] .subline,html[data-theme="dark"] small{color:#b9c7da}
+html[data-theme="dark"] .hero,html[data-theme="dark"] .global-strip,html[data-theme="dark"] .finance-total{color:#fff}
+html[data-theme="dark"] .message.mine .message-bubble{background:#176fc5;color:white}
+@media(max-width:560px){.profile-buttons{justify-content:flex-end}.profile-buttons .btn{padding:9px 10px;font-size:12px}.theme-btn{width:34px;height:34px;flex-basis:34px}}
