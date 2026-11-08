@@ -242,7 +242,7 @@ $("nav").innerHTML = TABS.map((t,i) => `<button data-a="aba" data-v="${i}"><span
 function aba(i){ tab = i; draft = {}; erro = ""; avisoOk = ""; renderCur(true); }
 ACT.aba = v => aba(+v);
 function setScreen(h){
-  const ids = ["pt","pc","px","fd","fv","fc"];
+  const ids = ["pt","pc","px","fd","fv","fc","pn"];
   ids.forEach(i => { const el = $(i); if(el) draft[i] = el.value; });
   $("screen").innerHTML = h;
   ids.forEach(i => { const el = $(i); if(el && draft[i] != null) el.value = draft[i]; });
@@ -259,10 +259,11 @@ $("screen").addEventListener("focusout", () => { if(dirty) setTimeout(() => dirt
 
 /* ===== 7. MURAL (compartilhado, com moderação real) ===== */
 const todos = () => Object.values({...pubMap, ...meusMap});
+const autorTxt = p => (p.autorNome || (p.autorUni ? "Aluno(a) " + p.autorUni : "Aluno(a)")) + (isMod && p.autorUid ? " · id " + p.autorUid.slice(0,6) : "");
 function cartao(p){
   const badge = p.status === "pendente" ? '<span class="badge wait">Aguardando aprovação</span>' : p.status === "recusado" ? '<span class="badge wait">Recusada</span>' : "";
   const acts = isMod && p.status === "pendente" ? `<div class="acts"><button class="sm ok" data-a="decide" data-v="${p.id}|aprovado">Aprovar</button><button class="sm no" data-a="decide" data-v="${p.id}|recusado">Recusar</button></div>` : "";
-  return `<div class="post"><div><span class="badge">${esc(p.cat)}</span>${badge}</div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p><small>${esc(p.autorEmail)} · ${fmt(p.data)}</small>${acts}</div>`;
+  return `<div class="post"><div><span class="badge">${esc(p.cat)}</span>${badge}</div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p><small>${esc(autorTxt(p))} · ${fmt(p.data)}</small>${acts}</div>`;
 }
 function renderMural(){
   const lista = todos().filter(p => filtro === "Todas" || p.cat === filtro).sort((a,b) => toDate(b.data) - toDate(a.data));
@@ -284,7 +285,7 @@ ACT.menviar = async () => {
   const t = $("pt").value.trim(), x = $("px").value.trim(), c = $("pc").value;
   if(t.length < 3 || x.length < 10){ erro = "Preencha o título (mín. 3 letras) e o texto (mín. 10 letras)."; return renderCur(true); }
   try{
-    await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorEmail:U.email, status:"pendente", data:serverTimestamp()});
+    await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorNome:P.nome || "", autorUni:P.universidade, status:"pendente", data:serverTimestamp()});
     mOpen = false; erro = ""; draft = {}; avisoOk = "Postagem enviada! Ela aparece para todos depois que um moderador aprovar.";
   }catch(e){ erro = erroAuth(e); }
   renderCur(true);
@@ -337,11 +338,23 @@ function renderPerfil(){
   const e = U.email.toLowerCase(), meus = todos().filter(p => p.autorUid === U.uid).length;
   setScreen(`<h2>👤 Perfil</h2><div class="avatar">${esc(e[0].toUpperCase())}</div>
   <p style="text-align:center;margin:0"><b>${esc(e)}</b><br><small style="color:var(--muted)">${esc(P.universidade)} · ${isMod ? "Moderador" : "Aluno"}</small></p>
+  <label for="pn">Nome de exibição (aparece nas suas postagens)</label>
+  <input id="pn" maxlength="40" placeholder="Ex.: Eduardo (ou deixe vazio)" value="${esc(P.nome || "")}">
+  <small class="hint">Se deixar vazio, aparece só “Aluno(a) ${esc(P.universidade)}”. Seu e-mail nunca aparece para outros alunos.</small>
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${erro ? `<div class="msg err">${erro}</div>` : ""}
+  <button class="btn" style="margin-top:12px" data-a="salvarnome">Salvar nome</button>
   <label>Resumo</label>
   <div class="hrow"><span>Postagens no mural</span><b>${meus}</b></div>
   <div class="hrow"><span>Gastos registrados</span><b>${gastos.length}</b></div>
   <button class="btn" style="background:var(--card);color:var(--text);border:1px solid var(--border)" data-a="sair">Sair da conta</button>`);
 }
+
+ACT.salvarnome = async () => {
+  const n = $("pn").value.trim().slice(0, 40);
+  try{ await updateDoc(doc(db,"users",U.uid), {nome:n}); P.nome = n; avisoOk = "Nome salvo!"; erro = ""; }
+  catch(x){ erro = erroAuth(x); avisoOk = ""; }
+  renderCur(true);
+};
 
 /* ===== 11. EVENTOS (um único ouvinte de cliques) ===== */
 document.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(b && ACT[b.dataset.a]) ACT[b.dataset.a](b.dataset.v, b); });
