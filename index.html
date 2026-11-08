@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>UniSync</title>
+<meta name="theme-color" content="#0F1A2B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="UniSync">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
 /* ===== IDENTIDADE VISUAL: cores e fontes ficam aqui, num lugar só ===== */
@@ -83,6 +90,12 @@ a.sm{display:inline-block;text-decoration:none;margin-top:4px}
 .gbtn{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
 .ou{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:14px}
 .ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--border)}
+.sm.gh{background:var(--card);color:var(--text);border:1px solid var(--border)}
+/* logo oficial: o PNG (branco, com transparência) serve de máscara para o degradê azul */
+.lg{display:block;aspect-ratio:900/344;-webkit-mask:url(logo.png) center/contain no-repeat;mask:url(logo.png) center/contain no-repeat;background:linear-gradient(180deg,var(--logo-a),var(--logo-b))}
+.priv h3{font-family:Poppins,system-ui,sans-serif;font-size:15px;margin:18px 0 4px}
+.priv p,.priv li{font-size:14px;margin:4px 0}
+.priv ul{padding-left:18px;margin:4px 0}
 .badge.ex{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
 .avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1A8FE3,#4A3FC0);color:#fff;font:700 30px Poppins,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;margin:14px auto}
 </style>
@@ -92,7 +105,7 @@ a.sm{display:inline-block;text-decoration:none;margin-top:4px}
   <div id="load" class="soon">Carregando…</div>
 
   <div id="auth" class="hidden">
-    <div class="logo" style="margin-top:30px">Uni<span>Sync</span></div>
+    <div class="lg" role="img" aria-label="UniSync" style="width:240px;margin:30px auto 0"></div>
     <p class="tag">Seu guia na transição para a vida adulta</p>
 
     <div class="card" id="formCard">
@@ -121,19 +134,39 @@ a.sm{display:inline-block;text-decoration:none;margin-top:4px}
       <div class="row"><button class="link" data-a="reenviar">Reenviar e-mail</button><button class="link" data-a="sair">Sair</button></div>
     </div>
     <div class="pal" aria-hidden="true"><div style="background:var(--primary)"></div><div style="background:var(--health)"></div><div style="background:var(--accent)"></div></div>
+    <div style="text-align:center;margin-top:14px"><button class="link" data-a="priv">Política de privacidade</button></div>
   </div>
 
   <div id="home" class="hidden" style="display:flex;flex-direction:column;flex:1">
-    <div class="top"><div class="logo" style="font-size:24px">Uni<span>Sync</span></div><button class="link" data-a="sair">Sair</button></div>
+    <div class="top"><div class="lg" role="img" aria-label="UniSync" style="width:120px"></div><button class="link" data-a="sair">Sair</button></div>
     <div class="content card" id="screen"></div>
     <div class="nav" id="nav"></div>
+  </div>
+  <div id="priv" class="hidden priv">
+    <div class="lg" role="img" aria-label="UniSync" style="width:140px;margin:8px auto 12px"></div>
+    <div class="card">
+      <h2 style="font-size:20px">Política de privacidade</h2>
+      <p style="color:var(--muted)">Resumo em linguagem simples. O UniSync é um projeto acadêmico da disciplina Inovações para a Engenharia.</p>
+      <h3>Quais dados guardamos</h3>
+      <ul><li>E-mail institucional e universidade (descoberta pelo domínio do e-mail)</li><li>Nome de exibição, se você escolher informar</li><li>Os gastos que você registra na aba Finanças</li><li>Suas postagens no mural</li></ul>
+      <h3>Para quê</h3>
+      <p>Para permitir o acesso só de estudantes de universidades públicas paulistas, mostrar o mural, guardar o seu controle de gastos e moderar as postagens.</p>
+      <h3>Quem vê o quê</h3>
+      <ul><li>Seus gastos são privados: só você os vê.</li><li>Suas postagens aprovadas aparecem para os alunos que entraram no app, com o seu nome de exibição ou só com “Aluno(a)” e a universidade. Seu e-mail não aparece.</li><li>Os moderadores veem um código curto de identificação nas postagens, para agir em caso de abuso.</li></ul>
+      <h3>Onde ficam os dados</h3>
+      <p>No Firebase (Google). O banco de dados fica em São Paulo.</p>
+      <h3>Seus direitos</h3>
+      <p>Você pode alterar o nome de exibição, editar ou apagar suas postagens e excluir a conta pelo Perfil. Ao excluir a conta, apagamos seu perfil, seus gastos e suas postagens. Não vendemos nem repassamos seus dados a terceiros.</p>
+      <p style="color:var(--muted);font-size:12px">Este texto é um resumo para o protótipo e não substitui uma análise jurídica.</p>
+      <button class="btn" data-a="privVoltar">Voltar</button>
+    </div>
   </div>
 </div>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {getFirestore,doc,getDoc,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,GoogleAuthProvider,signInWithPopup,deleteUser} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,onSnapshot,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 /* ===== 1. CONFIGURAÇÃO DO FIREBASE (projeto unisync) ===== */
 const firebaseConfig = {
@@ -158,7 +191,8 @@ const brl = n => n.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
 const toDate = t => (t && t.toDate) ? t.toDate() : new Date();
 const fmt = t => toDate(t).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"});
 const aviso = (id, t, tipo) => { $(id).textContent = t; $(id).className = "msg " + tipo; };
-function show(which){ ["load","auth","home"].forEach(i => $(i).classList.toggle("hidden", i !== which)); }
+let lastView = "auth";
+function show(which){ if(which !== "priv") lastView = which; ["load","auth","home","priv"].forEach(i => $(i).classList.toggle("hidden", i !== which)); }
 function erroAuth(e){
   const m = {"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.",
     "auth/email-already-in-use":"Esse e-mail já tem conta. Toque em “Já tenho conta”.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
@@ -253,7 +287,7 @@ async function startApp(user){
 
 /* ===== 6. TELA PRINCIPAL ===== */
 $("nav").innerHTML = TABS.map((t,i) => `<button data-a="aba" data-v="${i}"><span>${t[1]}</span>${t[0]}</button>`).join("");
-function aba(i){ tab = i; draft = {}; erro = ""; avisoOk = ""; renderCur(true); }
+function aba(i){ tab = i; draft = {}; erro = ""; avisoOk = ""; delConfirm = false; renderCur(true); }
 ACT.aba = v => aba(+v);
 function setScreen(h){
   const ids = ["pt","pc","px","fd","fv","fc","pn"];
@@ -272,11 +306,16 @@ function renderCur(force){
 $("screen").addEventListener("focusout", () => { if(dirty) setTimeout(() => dirty && renderCur(), 300); });
 
 /* ===== 7. MURAL (compartilhado, com moderação real) ===== */
+let editId = null, delConfirm = false;
 const todos = () => Object.values({...pubMap, ...meusMap});
 const autorTxt = p => (p.autorNome || (p.autorUni ? "Aluno(a) " + p.autorUni : "Aluno(a)")) + (isMod && p.autorUid ? " · id " + p.autorUid.slice(0,6) : "");
 function cartao(p){
+  const own = p.autorUid === U.uid;
   const badge = p.status === "pendente" ? '<span class="badge wait">Aguardando aprovação</span>' : p.status === "recusado" ? '<span class="badge wait">Recusada</span>' : "";
-  const acts = isMod && p.status === "pendente" ? `<div class="acts"><button class="sm ok" data-a="decide" data-v="${p.id}|aprovado">Aprovar</button><button class="sm no" data-a="decide" data-v="${p.id}|recusado">Recusar</button></div>` : "";
+  const mod = isMod && p.status === "pendente" ? `<button class="sm ok" data-a="decide" data-v="${p.id}|aprovado">Aprovar</button><button class="sm no" data-a="decide" data-v="${p.id}|recusado">Recusar</button>` : "";
+  const edit = own ? `<button class="sm gh" data-a="pedit" data-v="${p.id}">Editar</button>` : "";
+  const del = (own || isMod) ? `<button class="sm ${own ? "gh" : "no"}" data-a="pdel" data-v="${p.id}">${own ? "Apagar" : "Remover"}</button>` : "";
+  const acts = (mod || edit || del) ? `<div class="acts">${mod}${edit}${del}</div>` : "";
   return `<div class="post"><div><span class="badge">${esc(p.cat)}</span>${badge}</div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p><small>${esc(autorTxt(p))} · ${fmt(p.data)}</small>${acts}</div>`;
 }
 function renderMural(){
@@ -285,22 +324,42 @@ function renderMural(){
   setScreen(`<div class="mh"><h2>📢 Mural</h2><button class="sm" data-a="mform">${mOpen ? "Cancelar" : "+ Nova postagem"}</button></div>
   ${isMod ? `<div class="msg ok" style="display:block">Você é moderador · ${pend} aguardando aprovação</div>` : ""}
   ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${!mOpen && erro ? `<div class="msg err">${erro}</div>` : ""}
-  ${mOpen ? `<div class="pform"><label for="pt">Título</label><input id="pt" maxlength="60">
+  ${mOpen ? `<div class="pform">${editId ? '<small class="hint">Ao salvar, a postagem volta para a fila de aprovação.</small>' : ""}<label for="pt">Título</label><input id="pt" maxlength="60">
     <label for="pc">Categoria</label><select id="pc">${CATS.map(c => `<option>${c}</option>`).join("")}</select>
     <label for="px">Texto</label><textarea id="px" maxlength="300"></textarea>
-    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="menviar">Enviar para aprovação</button></div>` : ""}
+    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="menviar">${editId ? "Salvar e reenviar para aprovação" : "Enviar para aprovação"}</button></div>` : ""}
   <div class="chips">${["Todas",...CATS].map(c => `<button class="chip ${c===filtro?"on":""}" data-a="filtro" data-v="${c}">${c}</button>`).join("")}</div>
   ${lista.length ? lista.map(cartao).join("") : "<div class='soon'>Nenhuma postagem aqui ainda.</div>"}`);
 }
 ACT.filtro = v => { filtro = v; avisoOk = ""; renderCur(true); };
-ACT.mform = () => { mOpen = !mOpen; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
+ACT.mform = () => { mOpen = !mOpen; editId = null; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
 ACT.decide = async v => { const [id, st] = v.split("|"); try{ await updateDoc(doc(db,"posts",id), {status:st}); }catch(x){ erro = erroAuth(x); renderCur(true); } };
+ACT.pedit = v => {
+  const p = todos().find(x => x.id === v); if(!p) return;
+  editId = v; mOpen = true; erro = ""; avisoOk = "";
+  draft = {pt:p.titulo, pc:p.cat, px:p.texto};
+  ["pt","pc","px"].forEach(i => { const el = $(i); if(el) el.value = draft[i]; });
+  renderCur(true);
+};
+ACT.pdel = async v => {
+  const p = todos().find(x => x.id === v); if(!p) return;
+  if(!confirm(p.autorUid === U.uid ? "Apagar esta postagem?" : "Remover esta postagem do mural?")) return;
+  try{ await deleteDoc(doc(db,"posts",v)); avisoOk = "Postagem removida."; erro = ""; }
+  catch(x){ erro = erroAuth(x); avisoOk = ""; }
+  renderCur(true);
+};
 ACT.menviar = async () => {
   const t = $("pt").value.trim(), x = $("px").value.trim(), c = $("pc").value;
   if(t.length < 3 || x.length < 10){ erro = "Preencha o título (mín. 3 letras) e o texto (mín. 10 letras)."; return renderCur(true); }
   try{
-    await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorNome:P.nome || "", autorUni:P.universidade, status:"pendente", data:serverTimestamp()});
-    mOpen = false; erro = ""; draft = {}; avisoOk = "Postagem enviada! Ela aparece para todos depois que um moderador aprovar.";
+    if(editId){
+      await updateDoc(doc(db,"posts",editId), {titulo:t, texto:x, cat:c, status:"pendente"});
+      avisoOk = "Postagem atualizada! Ela volta para a fila e aparece de novo depois da aprovação.";
+    } else {
+      await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorNome:P.nome || "", autorUni:P.universidade, status:"pendente", data:serverTimestamp()});
+      avisoOk = "Postagem enviada! Ela aparece para todos depois que um moderador aprovar.";
+    }
+    mOpen = false; erro = ""; draft = {}; editId = null;
   }catch(e){ erro = erroAuth(e); }
   renderCur(true);
 };
@@ -337,13 +396,18 @@ const SAUDE = {
   "Vacinação":[{t:"Mantenha a caderneta em dia",x:"Confira quais vacinas estão pendentes e procure uma UBS para atualizar. Leve um documento com foto e a caderneta de vacinação, se tiver."},{t:"Campanha de vacinação do semestre",x:"Aqui vão as datas e os locais das campanhas na universidade e na região.",ex:1}],
   "UBSs":[{t:"Encontre a UBS mais próxima",x:"As Unidades Básicas de Saúde atendem gratuitamente pelo SUS. Leve documento com foto e, se tiver, o Cartão SUS.",link:"https://www.google.com/maps/search/UBS+perto+de+mim"}],
   "Rodas de conversa":[{t:"Roda de conversa: ansiedade e rotina acadêmica",x:"Encontro aberto aos estudantes, promovido pela universidade. Data e local a definir.",ex:1},{t:"Roda de conversa: primeiros passos na vida adulta",x:"Troca de experiências sobre moradia, dinheiro e organização do tempo.",ex:1}],
-  "Apoio emocional":[{t:"CVV – 188",x:"Apoio emocional gratuito, 24 horas por dia, por telefone.",tel:"188"},{t:"SAMU – 192",x:"Para emergências de saúde, ligue na hora.",tel:"192"},{t:"Apoio psicológico da universidade",x:"Procure o serviço de acolhimento da sua instituição. Contatos a incluir.",ex:1}]
+  "Apoio emocional":[{t:"CVV – 188",x:"Apoio emocional gratuito, 24 horas por dia, por telefone.",tel:"188"},{t:"SAMU – 192",x:"Para emergências de saúde, ligue na hora.",tel:"192"},{t:"USP – Escritório de Saúde Mental",uni:"USP",x:"Ligado à Reitoria, oferece acolhimento psicológico voltado a orientação e prevenção. O atendimento é na Superintendência de Assistência Social (SAS), na Cidade Universitária.",link:"https://sites.usp.br/esm/formulario-do-esm/",lk:"Formulário do ESM"},
+    {t:"Unicamp – SAPPE",uni:"Unicamp",x:"Serviço de Assistência Psicológica e Psiquiátrica ao Estudante, para alunos de graduação e pós-graduação. Contato: sappeass@unicamp.br ou (19) 3521-6643.",link:"mailto:sappeass@unicamp.br",lk:"Enviar e-mail",tel:"1935216643",tl:"(19) 3521-6643"},
+    {t:"Unesp – NTAPS",uni:"Unesp",x:"O Núcleo Técnico de Atenção Psicossocial oferece acolhimento psicossocial a estudantes de graduação e pós-graduação de todas as unidades. Procure também a Seção Técnica de Saúde do seu câmpus."},
+    {t:"UFABC – Seção Psicossocial (ProAP)",uni:"UFABC",x:"A Pró-Reitoria de Assuntos Comunitários e Políticas Afirmativas tem uma seção psicossocial para a comunidade. Veja formas de contato e horários no site da ProAP.",link:"https://proap.ufabc.edu.br",lk:"Site da ProAP"},
+    {t:"Outras instituições",x:"Unifesp, UFSCar, IFSP, Univesp e Fatec: procure o setor de assuntos estudantis da sua instituição para saber do acolhimento psicológico."},
+    {t:"Confira sempre o site oficial",x:"Serviços, horários e contatos mudam. Antes de contar com um deles, confirme no site da sua universidade."}]
 };
 function renderSaude(){
   setScreen(`<h2>🌿 Saúde e bem-estar</h2>
   <div class="chips" style="margin-top:10px">${Object.keys(SAUDE).map(s => `<button class="chip ${s===sSec?"on":""}" data-a="ssec" data-v="${s}">${s}</button>`).join("")}</div>
-  ${SAUDE[sSec].map(c => `<div class="post"><h3 style="margin-top:0">${c.t}${c.ex ? ' <span class="badge ex">exemplo</span>' : ""}</h3><p>${c.x}</p>
-    ${c.link ? `<a class="sm" href="${c.link}" target="_blank" rel="noopener">Buscar no mapa</a>` : ""}${c.tel ? `<a class="sm" href="tel:${c.tel}">Ligar ${c.tel}</a>` : ""}</div>`).join("")}`);
+  ${[...SAUDE[sSec]].sort((a,b) => (b.uni === P.universidade) - (a.uni === P.universidade)).map(c => `<div class="post"><h3 style="margin-top:0">${c.t}${c.ex ? ' <span class="badge ex">exemplo</span>' : ""}</h3><p>${c.x}</p>
+    ${c.link ? `<a class="sm" href="${c.link}" target="_blank" rel="noopener">${c.lk || "Buscar no mapa"}</a>` : ""}${c.tel ? `<a class="sm" href="tel:${c.tel}">Ligar ${c.tl || c.tel}</a>` : ""}</div>`).join("")}`);
 }
 ACT.ssec = v => { sSec = v; renderCur(true); };
 
@@ -360,7 +424,9 @@ function renderPerfil(){
   <label>Resumo</label>
   <div class="hrow"><span>Postagens no mural</span><b>${meus}</b></div>
   <div class="hrow"><span>Gastos registrados</span><b>${gastos.length}</b></div>
-  <button class="btn" style="background:var(--card);color:var(--text);border:1px solid var(--border)" data-a="sair">Sair da conta</button>`);
+  <button class="btn" style="background:var(--card);color:var(--text);border:1px solid var(--border)" data-a="sair">Sair da conta</button>
+  <div class="row" style="margin-top:14px"><button class="link" data-a="priv">Política de privacidade</button><button class="link" style="color:var(--error)" data-a="delask">Excluir minha conta</button></div>
+  ${delConfirm ? `<div class="msg err" style="display:block">Isso apaga seu perfil, seus gastos e suas postagens, e não dá para desfazer.<div class="acts"><button class="sm no" data-a="delyes">Sim, excluir tudo</button><button class="sm gh" data-a="delno">Cancelar</button></div></div>` : ""}`);
 }
 
 ACT.salvarnome = async () => {
@@ -369,6 +435,30 @@ ACT.salvarnome = async () => {
   catch(x){ erro = erroAuth(x); avisoOk = ""; }
   renderCur(true);
 };
+
+ACT.priv = () => show("priv");
+ACT.privVoltar = () => show(lastView);
+ACT.delask = () => { delConfirm = true; erro = ""; avisoOk = ""; renderCur(true); };
+ACT.delno = () => { delConfirm = false; renderCur(true); };
+ACT.delyes = async () => {
+  const last = Date.parse(U.metadata.lastSignInTime || "");
+  if(!last || Date.now() - last > 4 * 60 * 1000){ delConfirm = false; erro = "Por segurança, saia da conta, entre de novo e exclua a conta em até 4 minutos."; return renderCur(true); }
+  try{
+    const apagar = async snap => { for(const d of snap.docs) await deleteDoc(d.ref); };
+    await apagar(await getDocs(collection(db,"users",U.uid,"gastos")));
+    await apagar(await getDocs(query(collection(db,"posts"), where("autorUid","==",U.uid))));
+    await deleteDoc(doc(db,"users",U.uid));
+    await deleteUser(auth.currentUser);
+    aviso("msg", "Sua conta e seus dados foram excluídos.", "ok");
+  }catch(x){
+    delConfirm = false;
+    erro = x.code === "auth/requires-recent-login" ? "Por segurança, saia da conta, entre de novo e tente excluir de novo." : erroAuth(x);
+    renderCur(true);
+  }
+};
+
+/* Permite instalar o app na tela inicial (PWA) */
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 
 /* ===== 11. EVENTOS (um único ouvinte de cliques) ===== */
 document.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(b && ACT[b.dataset.a]) ACT[b.dataset.a](b.dataset.v, b); });
