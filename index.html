@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UniSync</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== IDENTIDADE VISUAL: cores e fontes ficam aqui, num lugar só ===== */
+:root{
+  --primary:#1A8FE3; --health:#3CCFE0; --accent:#4A3FC0; --logo-a:#1A8FE3; --logo-b:#5EE4F5;
+  --bg:#F1F8FE; --card:#FFFFFF; --text:#1F2433; --muted:#6B7287; --border:#DDE0EA; --error:#D32F2F;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0F1A2B;--card:#18253A;--text:#EAF3FC;--muted:#8FA6C0;--border:#2A3D58;--primary:#4DB5FF;color-scheme:dark;}
+}
+:root[data-theme="dark"]{--bg:#0F1A2B;--card:#18253A;--text:#EAF3FC;--muted:#8FA6C0;--border:#2A3D58;--primary:#4DB5FF;color-scheme:dark;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:420px;min-height:100vh;display:flex;flex-direction:column;padding:24px 20px}
+h1,h2,.logo{font-family:Poppins,system-ui,sans-serif;margin:0}
+.logo{font-size:34px;text-align:center;background:linear-gradient(180deg,var(--logo-a),var(--logo-b));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.logo span{color:inherit}
+.tag{text-align:center;color:var(--muted);margin:6px 0 28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px}
+label{display:block;font-size:14px;font-weight:500;margin:14px 0 6px}
+input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}
+input:focus{outline:2px solid var(--primary);border-color:transparent}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;margin-top:20px;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
+.link{background:none;border:0;color:var(--primary);padding:6px;font-weight:500}
+.row{display:flex;justify-content:space-between;margin-top:10px}
+.msg{margin-top:14px;font-size:14px;padding:10px 12px;border-radius:10px;display:none}
+.msg.err{display:block;background:rgba(211,47,47,.12);color:var(--error)}
+.msg.ok{display:block;background:rgba(38,166,154,.15);color:var(--health)}
+.demo{margin-top:14px;font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px}
+.hidden{display:none!important}
+.pal{display:flex;gap:8px;margin-top:22px}
+.pal div{flex:1;height:34px;border-radius:10px}
+/* tela principal */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.content{flex:1}
+.soon{text-align:center;color:var(--muted);padding:40px 10px}
+.nav{display:flex;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:6px;margin-top:16px}
+.nav button{flex:1;border:0;background:none;padding:10px 2px;border-radius:12px;color:var(--muted);font-size:12px}
+.nav button.on{background:var(--primary);color:#fff}
+.nav span{display:block;font-size:20px}
+/* mural */
+.mh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sm{border:0;border-radius:10px;padding:8px 12px;background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+.sm.ok{background:var(--health);color:#0B2A33}.sm.no{background:var(--error)}
+.mod{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:12px 0}
+.mod input{width:auto}
+textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}
+textarea{min-height:80px;resize:vertical}
+.pform{border:1px solid var(--border);border-radius:14px;padding:4px 14px 14px;margin:10px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 10px}
+.chip{white-space:nowrap;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:99px;padding:6px 12px;font-size:13px}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.post{border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:10px}
+.post h3{font-family:Poppins,system-ui,sans-serif;font-size:16px;margin:8px 0 4px}
+.post p{margin:0 0 8px;font-size:14px}
+.post small{color:var(--muted)}
+.badge{font-size:11px;font-weight:600;border-radius:99px;padding:3px 9px;background:var(--health);color:#0B2A33}
+.badge.wait{background:var(--accent);color:#fff;margin-left:6px}
+.acts{display:flex;gap:8px;margin-top:10px}
+/* RU */
+.saldo{background:linear-gradient(135deg,#1A8FE3,#4A3FC0);color:#fff;border-radius:16px;padding:16px;margin:12px 0;display:flex;flex-direction:column}
+.saldo b{font-family:Poppins,system-ui,sans-serif;font-size:28px}
+.hrow{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.hrow b{color:var(--health)}
+/* finanças */
+.bar{display:grid;grid-template-columns:92px 1fr auto;gap:8px;align-items:center;font-size:13px;margin:7px 0}
+.bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trk{height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.trk i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--health))}
+.x{border:0;background:none;color:var(--muted);padding:4px 8px}
+a.sm{display:inline-block;text-decoration:none;margin-top:4px}
+.hint{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.badge.ex{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1A8FE3,#4A3FC0);color:#fff;font:700 30px Poppins,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;margin:14px auto}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="load" class="soon">Carregando…</div>
+
+  <div id="auth" class="hidden">
+    <div class="logo" style="margin-top:30px">Uni<span>Sync</span></div>
+    <p class="tag">Seu guia na transição para a vida adulta</p>
+
+    <div class="card" id="formCard">
+      <h2 id="title" style="font-size:20px">Entrar</h2>
+      <label for="email">E-mail institucional</label>
+      <input id="email" type="email" placeholder="seu e-mail institucional" autocomplete="email">
+      <small class="hint">Use o e-mail da sua universidade pública paulista.</small>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" placeholder="mínimo 6 caracteres" autocomplete="current-password">
+      <button class="btn" id="go" data-a="go">Entrar</button>
+      <div class="row">
+        <button class="link" id="toggle" data-a="toggle">Criar conta</button>
+        <button class="link" data-a="forgot">Esqueci minha senha</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card hidden" id="verCard">
+      <h2 style="font-size:20px">Confirme seu e-mail</h2>
+      <p style="color:var(--muted);font-size:14px">Enviamos um link de confirmação para <b id="sentTo"></b>. Abra o e-mail, clique no link e volte aqui. Olhe também a caixa de spam.</p>
+      <button class="btn" data-a="jaconfirmei">Já confirmei</button>
+      <div class="msg" id="msg2"></div>
+      <div class="row"><button class="link" data-a="reenviar">Reenviar e-mail</button><button class="link" data-a="sair">Sair</button></div>
+    </div>
+    <div class="pal" aria-hidden="true"><div style="background:var(--primary)"></div><div style="background:var(--health)"></div><div style="background:var(--accent)"></div></div>
+  </div>
+
+  <div id="home" class="hidden" style="display:flex;flex-direction:column;flex:1">
+    <div class="top"><div class="logo" style="font-size:24px">Uni<span>Sync</span></div><button class="link" data-a="sair">Sair</button></div>
+    <div class="content card" id="screen"></div>
+    <div class="nav" id="nav"></div>
+  </div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,onSnapshot,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ===== 1. CONFIGURAÇÃO DO FIREBASE (projeto unisync) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCtHf-olYZLy0mVgK6nD8cfPZI6WqqllNM",
+  authDomain: "unisync-559ef.firebaseapp.com",
+  projectId: "unisync-559ef",
+  storageBucket: "unisync-559ef.firebasestorage.app",
+  messagingSenderId: "275111684381",
+  appId: "1:275111684381:web:5702002681d04f9e9a99f4"
+};
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+
+/* ===== 2. UNIVERSIDADES PERMITIDAS (a mesma lista vai nas regras do Firestore) ===== */
+const UNIS = {"usp.br":"USP","unicamp.br":"Unicamp","unesp.br":"Unesp","unifesp.br":"Unifesp","ufscar.br":"UFSCar","ufabc.edu.br":"UFABC","fatec.sp.gov.br":"Fatec","ifsp.edu.br":"IFSP","univesp.br":"Univesp"};
+const uniKey = e => { const d = (e.split("@")[1] || "").toLowerCase(); return Object.keys(UNIS).find(x => d === x || d.endsWith("." + x)); };
+const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !!uniKey(e);
+
+/* ===== 3. UTILIDADES ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const brl = n => n.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+const toDate = t => (t && t.toDate) ? t.toDate() : new Date();
+const fmt = t => toDate(t).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"});
+const aviso = (id, t, tipo) => { $(id).textContent = t; $(id).className = "msg " + tipo; };
+function show(which){ ["load","auth","home"].forEach(i => $(i).classList.toggle("hidden", i !== which)); }
+function erroAuth(e){
+  const m = {"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.",
+    "auth/email-already-in-use":"Esse e-mail já tem conta. Toque em “Já tenho conta”.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
+    "auth/too-many-requests":"Muitas tentativas. Espere alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.",
+    "auth/invalid-email":"E-mail inválido.","permission-denied":"Sem permissão. Confira as regras do Firestore."};
+  return m[e.code] || "Algo deu errado (" + (e.code || e.message) + ").";
+}
+
+/* ===== 4. LOGIN, CADASTRO E VERIFICAÇÃO ===== */
+let modo = "login", started = null;
+const ACT = {};
+ACT.toggle = () => {
+  modo = modo === "login" ? "cadastro" : "login";
+  $("title").textContent = modo === "login" ? "Entrar" : "Criar conta";
+  $("go").textContent = modo === "login" ? "Entrar" : "Criar conta";
+  $("toggle").textContent = modo === "login" ? "Criar conta" : "Já tenho conta";
+  $("msg").className = "msg";
+};
+ACT.go = async () => {
+  const e = $("email").value.trim().toLowerCase(), s = $("senha").value;
+  if(!emailValido(e)) return aviso("msg", "Use o e-mail institucional da sua universidade pública paulista (USP, Unicamp, Unesp, UFABC, IFSP, Univesp e outras).", "err");
+  if(s.length < 6) return aviso("msg", "A senha precisa ter pelo menos 6 caracteres.", "err");
+  try{
+    if(modo === "login") await signInWithEmailAndPassword(auth, e, s);
+    else { const c = await createUserWithEmailAndPassword(auth, e, s); await sendEmailVerification(c.user); }
+  }catch(x){ aviso("msg", erroAuth(x), "err"); }
+};
+ACT.forgot = async () => {
+  const e = $("email").value.trim().toLowerCase();
+  if(!emailValido(e)) return aviso("msg", "Digite seu e-mail institucional acima para receber o link.", "err");
+  try{ await sendPasswordResetEmail(auth, e); aviso("msg", "Se existir conta com esse e-mail, enviamos um link para redefinir a senha.", "ok"); }
+  catch(x){ aviso("msg", erroAuth(x), "err"); }
+};
+ACT.reenviar = async () => {
+  try{ await sendEmailVerification(auth.currentUser); aviso("msg2", "E-mail reenviado.", "ok"); }
+  catch(x){ aviso("msg2", erroAuth(x), "err"); }
+};
+ACT.jaconfirmei = async () => {
+  try{
+    await auth.currentUser.reload(); await auth.currentUser.getIdToken(true);
+    if(auth.currentUser.emailVerified) startApp(auth.currentUser); else aviso("msg2", "Ainda não confirmado. Clique no link do e-mail e tente de novo.", "err");
+  }catch(x){ aviso("msg2", erroAuth(x), "err"); }
+};
+ACT.sair = () => signOut(auth);
+
+/* ===== 5. ESTADO DO APP ===== */
+let U = null, P = null, isMod = false, tab = 0, filtro = "Todas", mOpen = false, fOpen = false, avisoOk = "", erro = "", sSec = "Vacinação", dirty = false;
+let pubMap = {}, meusMap = {}, gastos = [], unsubs = [], draft = {};
+const TABS = [["Mural","📢"],["Finanças","💰"],["Saúde","🌿"],["Perfil","👤"]];
+const CATS = ["Festa","Trabalho autônomo","Processo seletivo","Outros"];
+const FCATS = ["Alimentação","Transporte","Moradia","Lazer","Estudos","Outros"];
+
+onAuthStateChanged(auth, user => {
+  unsubs.forEach(f => f()); unsubs = []; started = null; U = null; P = null; isMod = false;
+  pubMap = {}; meusMap = {}; gastos = []; draft = {};
+  if(!user){ show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden"); $("senha").value = ""; return; }
+  if(!user.emailVerified){
+    $("sentTo").textContent = user.email; $("msg2").className = "msg";
+    $("formCard").classList.add("hidden"); $("verCard").classList.remove("hidden"); show("auth"); return;
+  }
+  startApp(user);
+});
+
+async function startApp(user){
+  if(started === user.uid) return;
+  started = user.uid; U = user; show("load");
+  try{
+    const ref = doc(db, "users", user.uid), snap = await getDoc(ref);
+    if(snap.exists()) P = snap.data();
+    else { P = {email:user.email.toLowerCase(), universidade:UNIS[uniKey(user.email)] || "Universidade", role:"aluno", criadoEm:serverTimestamp()}; await setDoc(ref, P); }
+    isMod = P.role === "moderador";
+    const onErr = x => { erro = erroAuth(x); renderCur(); };
+    const grab = (map, set) => s => { const m = {}; s.forEach(d => m[d.id] = {id:d.id, ...d.data()}); set(m); renderCur(); };
+    if(isMod) unsubs.push(onSnapshot(collection(db,"posts"), grab(0, m => pubMap = m), onErr));
+    else {
+      unsubs.push(onSnapshot(query(collection(db,"posts"), where("status","==","aprovado")), grab(0, m => pubMap = m), onErr));
+      unsubs.push(onSnapshot(query(collection(db,"posts"), where("autorUid","==",user.uid)), grab(0, m => meusMap = m), onErr));
+    }
+    unsubs.push(onSnapshot(collection(db,"users",user.uid,"gastos"), s => { gastos = s.docs.map(d => ({id:d.id, ...d.data()})); renderCur(); }, onErr));
+    show("home"); aba(0);
+  }catch(x){ show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden"); aviso("msg", erroAuth(x), "err"); signOut(auth); }
+}
+
+/* ===== 6. TELA PRINCIPAL ===== */
+$("nav").innerHTML = TABS.map((t,i) => `<button data-a="aba" data-v="${i}"><span>${t[1]}</span>${t[0]}</button>`).join("");
+function aba(i){ tab = i; draft = {}; erro = ""; avisoOk = ""; renderCur(true); }
+ACT.aba = v => aba(+v);
+function setScreen(h){
+  const ids = ["pt","pc","px","fd","fv","fc"];
+  ids.forEach(i => { const el = $(i); if(el) draft[i] = el.value; });
+  $("screen").innerHTML = h;
+  ids.forEach(i => { const el = $(i); if(el && draft[i] != null) el.value = draft[i]; });
+  [...$("nav").children].forEach((b,j) => b.classList.toggle("on", j === tab));
+}
+function renderCur(force){
+  if(!U || $("home").classList.contains("hidden")) return;
+  const a = document.activeElement;
+  if(!force && a && $("screen").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)){ dirty = true; return; }
+  dirty = false;
+  [renderMural, renderFin, renderSaude, renderPerfil][tab]();
+}
+$("screen").addEventListener("focusout", () => { if(dirty) setTimeout(() => dirty && renderCur(), 300); });
+
+/* ===== 7. MURAL (compartilhado, com moderação real) ===== */
+const todos = () => Object.values({...pubMap, ...meusMap});
+function cartao(p){
+  const badge = p.status === "pendente" ? '<span class="badge wait">Aguardando aprovação</span>' : p.status === "recusado" ? '<span class="badge wait">Recusada</span>' : "";
+  const acts = isMod && p.status === "pendente" ? `<div class="acts"><button class="sm ok" data-a="decide" data-v="${p.id}|aprovado">Aprovar</button><button class="sm no" data-a="decide" data-v="${p.id}|recusado">Recusar</button></div>` : "";
+  return `<div class="post"><div><span class="badge">${esc(p.cat)}</span>${badge}</div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p><small>${esc(p.autorEmail)} · ${fmt(p.data)}</small>${acts}</div>`;
+}
+function renderMural(){
+  const lista = todos().filter(p => filtro === "Todas" || p.cat === filtro).sort((a,b) => toDate(b.data) - toDate(a.data));
+  const pend = todos().filter(p => p.status === "pendente").length;
+  setScreen(`<div class="mh"><h2>📢 Mural</h2><button class="sm" data-a="mform">${mOpen ? "Cancelar" : "+ Nova postagem"}</button></div>
+  ${isMod ? `<div class="msg ok" style="display:block">Você é moderador · ${pend} aguardando aprovação</div>` : ""}
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${!mOpen && erro ? `<div class="msg err">${erro}</div>` : ""}
+  ${mOpen ? `<div class="pform"><label for="pt">Título</label><input id="pt" maxlength="60">
+    <label for="pc">Categoria</label><select id="pc">${CATS.map(c => `<option>${c}</option>`).join("")}</select>
+    <label for="px">Texto</label><textarea id="px" maxlength="300"></textarea>
+    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="menviar">Enviar para aprovação</button></div>` : ""}
+  <div class="chips">${["Todas",...CATS].map(c => `<button class="chip ${c===filtro?"on":""}" data-a="filtro" data-v="${c}">${c}</button>`).join("")}</div>
+  ${lista.length ? lista.map(cartao).join("") : "<div class='soon'>Nenhuma postagem aqui ainda.</div>"}`);
+}
+ACT.filtro = v => { filtro = v; avisoOk = ""; renderCur(true); };
+ACT.mform = () => { mOpen = !mOpen; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
+ACT.decide = async v => { const [id, st] = v.split("|"); try{ await updateDoc(doc(db,"posts",id), {status:st}); }catch(x){ erro = erroAuth(x); renderCur(true); } };
+ACT.menviar = async () => {
+  const t = $("pt").value.trim(), x = $("px").value.trim(), c = $("pc").value;
+  if(t.length < 3 || x.length < 10){ erro = "Preencha o título (mín. 3 letras) e o texto (mín. 10 letras)."; return renderCur(true); }
+  try{
+    await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorEmail:U.email, status:"pendente", data:serverTimestamp()});
+    mOpen = false; erro = ""; draft = {}; avisoOk = "Postagem enviada! Ela aparece para todos depois que um moderador aprovar.";
+  }catch(e){ erro = erroAuth(e); }
+  renderCur(true);
+};
+
+/* ===== 8. FINANÇAS (privadas: cada aluno vê só os seus gastos) ===== */
+function renderFin(){
+  const lista = [...gastos].sort((a,b) => toDate(b.data) - toDate(a.data));
+  const total = lista.reduce((a,g) => a + g.valor, 0);
+  const porCat = FCATS.map(c => [c, lista.filter(g => g.cat === c).reduce((a,g) => a + g.valor, 0)]).filter(x => x[1] > 0).sort((a,b) => b[1] - a[1]);
+  setScreen(`<div class="mh"><h2>💰 Finanças</h2><button class="sm" data-a="fform">${fOpen ? "Cancelar" : "+ Novo gasto"}</button></div>
+  <div class="saldo"><small>Total gasto (registrado)</small><b>${brl(total)}</b></div>
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${!fOpen && erro ? `<div class="msg err">${erro}</div>` : ""}
+  ${fOpen ? `<div class="pform"><label for="fd">Descrição</label><input id="fd" maxlength="40" placeholder="Ex.: Lanche">
+    <label for="fv">Valor (R$)</label><input id="fv" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00">
+    <label for="fc">Categoria</label><select id="fc">${FCATS.map(c => `<option>${c}</option>`).join("")}</select>
+    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="fsalvar">Salvar gasto</button></div>` : ""}
+  <label>Por categoria</label>
+  ${porCat.length ? porCat.map(([c,v]) => `<div class="bar"><span>${c}</span><div class="trk"><i style="width:${Math.round(v/total*100)}%"></i></div><b>${brl(v)}</b></div>`).join("") : "<div class='soon'>Nenhum gasto ainda.</div>"}
+  <label>Gastos recentes</label>
+  ${lista.map(g => `<div class="hrow"><span>${esc(g.desc)}<br><small style="color:var(--muted)">${fmt(g.data)} · ${esc(g.cat)}</small></span><span><b style="color:var(--text)">− ${brl(g.valor)}</b><button class="x" aria-label="Apagar gasto" data-a="fdel" data-v="${g.id}">✕</button></span></div>`).join("")}`);
+}
+ACT.fform = () => { fOpen = !fOpen; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
+ACT.fdel = async v => { try{ await deleteDoc(doc(db,"users",U.uid,"gastos",v)); }catch(x){ erro = erroAuth(x); renderCur(true); } };
+ACT.fsalvar = async () => {
+  const d = $("fd").value.trim(), v = parseFloat(String($("fv").value).replace(",", ".")), c = $("fc").value;
+  if(d.length < 2 || !(v > 0 && v <= 100000)){ erro = "Informe uma descrição e um valor maior que zero."; return renderCur(true); }
+  try{ await addDoc(collection(db,"users",U.uid,"gastos"), {desc:d, valor:Math.round(v*100)/100, cat:c, data:serverTimestamp()}); fOpen = false; erro = ""; draft = {}; avisoOk = "Gasto registrado!"; }
+  catch(e){ erro = erroAuth(e); }
+  renderCur(true);
+};
+
+/* ===== 9. SAÚDE (conteúdo informativo; itens "exemplo" devem ser trocados por dados oficiais) ===== */
+const SAUDE = {
+  "Vacinação":[{t:"Mantenha a caderneta em dia",x:"Confira quais vacinas estão pendentes e procure uma UBS para atualizar. Leve um documento com foto e a caderneta de vacinação, se tiver."},{t:"Campanha de vacinação do semestre",x:"Aqui vão as datas e os locais das campanhas na universidade e na região.",ex:1}],
+  "UBSs":[{t:"Encontre a UBS mais próxima",x:"As Unidades Básicas de Saúde atendem gratuitamente pelo SUS. Leve documento com foto e, se tiver, o Cartão SUS.",link:"https://www.google.com/maps/search/UBS+perto+de+mim"}],
+  "Rodas de conversa":[{t:"Roda de conversa: ansiedade e rotina acadêmica",x:"Encontro aberto aos estudantes, promovido pela universidade. Data e local a definir.",ex:1},{t:"Roda de conversa: primeiros passos na vida adulta",x:"Troca de experiências sobre moradia, dinheiro e organização do tempo.",ex:1}],
+  "Apoio emocional":[{t:"CVV – 188",x:"Apoio emocional gratuito, 24 horas por dia, por telefone.",tel:"188"},{t:"SAMU – 192",x:"Para emergências de saúde, ligue na hora.",tel:"192"},{t:"Apoio psicológico da universidade",x:"Procure o serviço de acolhimento da sua instituição. Contatos a incluir.",ex:1}]
+};
+function renderSaude(){
+  setScreen(`<h2>🌿 Saúde e bem-estar</h2>
+  <div class="chips" style="margin-top:10px">${Object.keys(SAUDE).map(s => `<button class="chip ${s===sSec?"on":""}" data-a="ssec" data-v="${s}">${s}</button>`).join("")}</div>
+  ${SAUDE[sSec].map(c => `<div class="post"><h3 style="margin-top:0">${c.t}${c.ex ? ' <span class="badge ex">exemplo</span>' : ""}</h3><p>${c.x}</p>
+    ${c.link ? `<a class="sm" href="${c.link}" target="_blank" rel="noopener">Buscar no mapa</a>` : ""}${c.tel ? `<a class="sm" href="tel:${c.tel}">Ligar ${c.tel}</a>` : ""}</div>`).join("")}`);
+}
+ACT.ssec = v => { sSec = v; renderCur(true); };
+
+/* ===== 10. PERFIL ===== */
+function renderPerfil(){
+  const e = U.email.toLowerCase(), meus = todos().filter(p => p.autorUid === U.uid).length;
+  setScreen(`<h2>👤 Perfil</h2><div class="avatar">${esc(e[0].toUpperCase())}</div>
+  <p style="text-align:center;margin:0"><b>${esc(e)}</b><br><small style="color:var(--muted)">${esc(P.universidade)} · ${isMod ? "Moderador" : "Aluno"}</small></p>
+  <label>Resumo</label>
+  <div class="hrow"><span>Postagens no mural</span><b>${meus}</b></div>
+  <div class="hrow"><span>Gastos registrados</span><b>${gastos.length}</b></div>
+  <button class="btn" style="background:var(--card);color:var(--text);border:1px solid var(--border)" data-a="sair">Sair da conta</button>`);
+}
+
+/* ===== 11. EVENTOS (um único ouvinte de cliques) ===== */
+document.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(b && ACT[b.dataset.a]) ACT[b.dataset.a](b.dataset.v, b); });
+</script>
+</body>
+</html>
