@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<base href="../">
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UniSync</title>
+<meta name="theme-color" content="#0F1A2B">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="UniSync">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== IDENTIDADE VISUAL: cores e fontes ficam aqui, num lugar só ===== */
+:root{
+  --primary:#1A8FE3; --health:#3CCFE0; --accent:#0B6FC2; --logo-a:#1A8FE3; --logo-b:#5EE4F5;
+  --bg:#F1F8FE; --card:#FFFFFF; --text:#1F2433; --muted:#6B7287; --border:#DDE0EA; --error:#D32F2F;
+  color-scheme: light;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#0F1A2B;--card:#18253A;--text:#EAF3FC;--muted:#8FA6C0;--border:#2A3D58;--primary:#4DB5FF;color-scheme:dark;}
+}
+:root[data-theme="dark"]{--bg:#0F1A2B;--card:#18253A;--text:#EAF3FC;--muted:#8FA6C0;--border:#2A3D58;--primary:#4DB5FF;color-scheme:dark;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;min-height:100vh;display:flex;justify-content:center}
+.app{width:100%;max-width:420px;min-height:100vh;display:flex;flex-direction:column;padding:24px 20px}
+h1,h2,.logo{font-family:Poppins,system-ui,sans-serif;margin:0}
+.logo{font-size:34px;text-align:center;background:linear-gradient(180deg,var(--logo-a),var(--logo-b));-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+.logo span{color:inherit}
+.tag{text-align:center;color:var(--muted);margin:6px 0 28px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:20px}
+label{display:block;font-size:14px;font-weight:500;margin:14px 0 6px}
+input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}
+input:focus{outline:2px solid var(--primary);border-color:transparent}
+button{font:inherit;cursor:pointer}
+.btn{width:100%;margin-top:20px;padding:14px;border:0;border-radius:12px;background:var(--accent);color:#fff;font-weight:600}
+.link{background:none;border:0;color:var(--primary);padding:6px;font-weight:500}
+.row{display:flex;justify-content:space-between;margin-top:10px}
+.msg{margin-top:14px;font-size:14px;padding:10px 12px;border-radius:10px;display:none}
+.msg.err{display:block;background:rgba(211,47,47,.12);color:var(--error)}
+.msg.ok{display:block;background:rgba(38,166,154,.15);color:var(--health)}
+.demo{margin-top:14px;font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:10px;padding:10px}
+.hidden{display:none!important}
+.pal{display:flex;gap:8px;margin-top:22px}
+.pal div{flex:1;height:34px;border-radius:10px}
+/* tela principal */
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.content{flex:1}
+.soon{text-align:center;color:var(--muted);padding:40px 10px}
+.nav{display:flex;border:1px solid var(--border);background:var(--card);border-radius:18px;padding:6px;margin-top:16px}
+.nav button{flex:1;border:0;background:none;padding:10px 2px;border-radius:12px;color:var(--muted);font-size:12px}
+.nav button.on{background:var(--primary);color:#fff}
+.nav span{display:block;font-size:20px}
+/* mural */
+.mh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sm{border:0;border-radius:10px;padding:8px 12px;background:var(--accent);color:#fff;font-weight:600;font-size:13px}
+.sm.ok{background:var(--health);color:#0B2A33}.sm.no{background:var(--error)}
+.mod{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:12px 0}
+.mod input{width:auto}
+textarea,select{width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--bg);color:var(--text);font:inherit}
+textarea{min-height:80px;resize:vertical}
+.pform{border:1px solid var(--border);border-radius:14px;padding:4px 14px 14px;margin:10px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:4px 0 10px}
+.chip{white-space:nowrap;border:1px solid var(--border);background:var(--bg);color:var(--text);border-radius:99px;padding:6px 12px;font-size:13px}
+.chip.on{background:var(--primary);border-color:var(--primary);color:#fff}
+.post{border:1px solid var(--border);border-radius:14px;padding:14px;margin-top:10px}
+.post h3{font-family:Poppins,system-ui,sans-serif;font-size:16px;margin:8px 0 4px}
+.post p{margin:0 0 8px;font-size:14px}
+.post small{color:var(--muted)}
+.badge{font-size:11px;font-weight:600;border-radius:99px;padding:3px 9px;background:var(--health);color:#0B2A33}
+.badge.wait{background:var(--accent);color:#fff;margin-left:6px}
+.acts{display:flex;gap:8px;margin-top:10px}
+/* RU */
+.saldo{background:linear-gradient(135deg,#1A8FE3,#0A5CA8);color:#fff;border-radius:16px;padding:16px;margin:12px 0;display:flex;flex-direction:column}
+.saldo b{font-family:Poppins,system-ui,sans-serif;font-size:28px}
+.hrow{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.hrow b{color:var(--health)}
+/* finanças */
+.bar{display:grid;grid-template-columns:92px 1fr auto;gap:8px;align-items:center;font-size:13px;margin:7px 0}
+.bar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trk{height:8px;background:var(--bg);border-radius:99px;overflow:hidden}
+.trk i{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--health))}
+.x{border:0;background:none;color:var(--muted);padding:4px 8px}
+a.sm{display:inline-block;text-decoration:none;margin-top:4px}
+.hint{display:block;color:var(--muted);font-size:12px;margin-top:6px}
+.gbtn{width:100%;margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px}
+.ou{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:13px;margin-top:14px}
+.ou::before,.ou::after{content:"";flex:1;height:1px;background:var(--border)}
+.sm.gh{background:var(--card);color:var(--text);border:1px solid var(--border)}
+/* logo oficial: o PNG (branco, com transparência) serve de máscara para o degradê azul */
+.lg{display:block;aspect-ratio:900/344;-webkit-mask:url(logo.png) center/contain no-repeat;mask:url(logo.png) center/contain no-repeat;background:linear-gradient(180deg,var(--logo-a),var(--logo-b))}
+.priv h3{font-family:Poppins,system-ui,sans-serif;font-size:15px;margin:18px 0 4px}
+.priv p,.priv li{font-size:14px;margin:4px 0}
+.priv ul{padding-left:18px;margin:4px 0}
+.badge.ex{background:var(--bg);color:var(--muted);border:1px solid var(--border)}
+.avatar{width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#1A8FE3,#0A5CA8);color:#fff;font:700 30px Poppins,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;margin:14px auto}
+</style>
+</head>
+<body>
+<div class="app">
+  <div id="load" class="soon">Carregando…</div>
+
+  <div id="auth" class="hidden">
+    <div class="lg" role="img" aria-label="UniSync" style="width:240px;margin:30px auto 0"></div>
+    <p class="tag">Seu guia na transição para a vida adulta</p>
+
+    <div class="card" id="formCard">
+      <h2 id="title" style="font-size:20px">Entrar</h2>
+      <button class="gbtn" data-a="google"><svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.4-4.6 7l7.4 5.7c4.3-4 6.9-9.9 6.9-17.2z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.4-5.7c-2.1 1.4-4.8 2.3-8.5 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>Continuar com Google</button>
+      <div class="ou">ou</div>
+      <label for="email">E-mail institucional</label>
+      <input id="email" type="email" placeholder="seu e-mail institucional" autocomplete="email">
+      <small class="hint">Use o e-mail da sua universidade pública paulista.</small>
+      <label for="senha">Senha</label>
+      <input id="senha" type="password" placeholder="mínimo 6 caracteres" autocomplete="current-password">
+      <button class="btn" id="go" data-a="go">Entrar</button>
+      <div class="row">
+        <button class="link" id="toggle" data-a="toggle">Criar conta</button>
+        <button class="link" data-a="forgot">Esqueci minha senha</button>
+      </div>
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <div class="card hidden" id="verCard">
+      <h2 style="font-size:20px">Confirme seu e-mail</h2>
+      <p style="color:var(--muted);font-size:14px">Enviamos um link de confirmação para <b id="sentTo"></b>. Abra o e-mail, clique no link e volte aqui.</p>
+      <div class="demo" style="color:var(--text);margin-top:0">⚠️ <b>Não chegou?</b> Olhe a pasta de <b>spam</b> ou <b>lixo eletrônico</b>. O e-mail pode levar alguns minutos e costuma cair lá.</div>
+      <button class="btn" data-a="jaconfirmei">Já confirmei</button>
+      <div class="msg" id="msg2"></div>
+      <div class="row"><button class="link" data-a="reenviar">Reenviar e-mail</button><button class="link" data-a="sair">Sair</button></div>
+    </div>
+    <div style="text-align:center;margin-top:14px"><button class="link" data-a="priv">Política de privacidade</button></div>
+  </div>
+
+  <div id="home" class="hidden" style="display:flex;flex-direction:column;flex:1">
+    <div class="top"><div class="lg" role="img" aria-label="UniSync" style="width:120px"></div><button class="link" data-a="sair">Sair</button></div>
+    <a href="./social-v12/" style="display:block;text-align:center;border-radius:12px;padding:12px;margin-bottom:12px;background:#0B6FC2;color:#fff;text-decoration:none;font:600 14px Inter,sans-serif">Comunidade UniSync v1.2 - Feed, Grupos, Chats e Perfis</a>
+    <div class="content card" id="screen"></div>
+    <div class="nav" id="nav"></div>
+  </div>
+  <div id="priv" class="hidden priv">
+    <div class="lg" role="img" aria-label="UniSync" style="width:140px;margin:8px auto 12px"></div>
+    <div class="card">
+      <h2 style="font-size:20px">Política de privacidade</h2>
+      <p style="color:var(--muted)">Resumo em linguagem simples. O UniSync é um projeto acadêmico da disciplina Inovações para a Engenharia.</p>
+      <h3>Quais dados guardamos</h3>
+      <ul><li>E-mail institucional e universidade (descoberta pelo domínio do e-mail)</li><li>Nome de exibição, se você escolher informar</li><li>Os gastos que você registra na aba Finanças</li><li>Suas postagens no mural</li></ul>
+      <h3>Para quê</h3>
+      <p>Para permitir o acesso só de estudantes de universidades públicas paulistas, mostrar o mural, guardar o seu controle de gastos e moderar as postagens.</p>
+      <h3>Quem vê o quê</h3>
+      <ul><li>Seus gastos são privados: só você os vê.</li><li>Suas postagens aprovadas aparecem para os alunos que entraram no app, com o seu nome de exibição ou só com “Aluno(a)” e a universidade. Seu e-mail não aparece.</li><li>Os moderadores veem um código curto de identificação nas postagens, para agir em caso de abuso.</li></ul>
+      <h3>Onde ficam os dados</h3>
+      <p>No Firebase (Google). O banco de dados fica em São Paulo.</p>
+      <h3>Seus direitos</h3>
+      <p>Você pode alterar o nome de exibição, editar ou apagar suas postagens e excluir a conta pelo Perfil. Ao excluir a conta, apagamos seu perfil, seus gastos e suas postagens. Não vendemos nem repassamos seus dados a terceiros.</p>
+      <p style="color:var(--muted);font-size:12px">Este texto é um resumo para o protótipo e não substitui uma análise jurídica.</p>
+      <button class="btn" data-a="privVoltar">Voltar</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {getAuth,onAuthStateChanged,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut,GoogleAuthProvider,signInWithPopup,deleteUser} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import {getFirestore,doc,getDoc,setDoc,addDoc,deleteDoc,updateDoc,collection,query,where,onSnapshot,getDocs,serverTimestamp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ===== 1. CONFIGURAÇÃO DO FIREBASE (projeto unisync) ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyCtHf-olYZLy0mVgK6nD8cfPZI6WqqllNM",
+  authDomain: "unisync-559ef.firebaseapp.com",
+  projectId: "unisync-559ef",
+  storageBucket: "unisync-559ef.firebasestorage.app",
+  messagingSenderId: "275111684381",
+  appId: "1:275111684381:web:5702002681d04f9e9a99f4"
+};
+const app = initializeApp(firebaseConfig), auth = getAuth(app), db = getFirestore(app);
+
+/* ===== 2. UNIVERSIDADES PERMITIDAS (a mesma lista vai nas regras do Firestore) ===== */
+const UNIS = {"usp.br":"USP","unicamp.br":"Unicamp","unesp.br":"Unesp","unifesp.br":"Unifesp","ufscar.br":"UFSCar","ufabc.edu.br":"UFABC","fatec.sp.gov.br":"Fatec","ifsp.edu.br":"IFSP","univesp.br":"Univesp"};
+const uniKey = e => { const d = (e.split("@")[1] || "").toLowerCase(); return Object.keys(UNIS).find(x => d === x || d.endsWith("." + x)); };
+const emailValido = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e) && !!uniKey(e);
+
+/* ===== 3. UTILIDADES ===== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const brl = n => n.toLocaleString("pt-BR", {style:"currency", currency:"BRL"});
+const toDate = t => (t && t.toDate) ? t.toDate() : new Date();
+const fmt = t => toDate(t).toLocaleDateString("pt-BR", {day:"2-digit", month:"2-digit"});
+const aviso = (id, t, tipo) => { $(id).textContent = t; $(id).className = "msg " + tipo; };
+let lastView = "auth";
+function show(which){ if(which !== "priv") lastView = which; ["load","auth","home","priv"].forEach(i => $(i).classList.toggle("hidden", i !== which)); }
+function erroAuth(e){
+  const m = {"auth/invalid-credential":"E-mail ou senha incorretos.","auth/wrong-password":"E-mail ou senha incorretos.","auth/user-not-found":"E-mail ou senha incorretos.",
+    "auth/email-already-in-use":"Esse e-mail já tem conta. Toque em “Já tenho conta”.","auth/weak-password":"A senha precisa ter pelo menos 6 caracteres.",
+    "auth/too-many-requests":"Muitas tentativas. Espere alguns minutos e tente de novo.","auth/network-request-failed":"Sem conexão com a internet.",
+    "auth/invalid-email":"E-mail inválido.","permission-denied":"Sem permissão. Confira as regras do Firestore.",
+    "auth/popup-blocked":"O navegador bloqueou a janela do Google. Libere os pop-ups e tente de novo.","auth/operation-not-allowed":"O login com Google ainda não foi ativado no Firebase."};
+  return m[e.code] || "Algo deu errado (" + (e.code || e.message) + ").";
+}
+
+/* ===== 4. LOGIN, CADASTRO E VERIFICAÇÃO ===== */
+let modo = "login", started = null;
+const ACT = {};
+ACT.toggle = () => {
+  modo = modo === "login" ? "cadastro" : "login";
+  $("title").textContent = modo === "login" ? "Entrar" : "Criar conta";
+  $("go").textContent = modo === "login" ? "Entrar" : "Criar conta";
+  $("toggle").textContent = modo === "login" ? "Criar conta" : "Já tenho conta";
+  $("msg").className = "msg";
+};
+ACT.go = async () => {
+  const e = $("email").value.trim().toLowerCase(), s = $("senha").value;
+  if(!emailValido(e)) return aviso("msg", "Use o e-mail institucional da sua universidade pública paulista (USP, Unicamp, Unesp, UFABC, IFSP, Univesp e outras).", "err");
+  if(s.length < 6) return aviso("msg", "A senha precisa ter pelo menos 6 caracteres.", "err");
+  try{
+    if(modo === "login") await signInWithEmailAndPassword(auth, e, s);
+    else { const c = await createUserWithEmailAndPassword(auth, e, s); await sendEmailVerification(c.user); }
+  }catch(x){ aviso("msg", erroAuth(x), "err"); }
+};
+ACT.forgot = async () => {
+  const e = $("email").value.trim().toLowerCase();
+  if(!emailValido(e)) return aviso("msg", "Digite seu e-mail institucional acima para receber o link.", "err");
+  try{ await sendPasswordResetEmail(auth, e); aviso("msg", "Se existir conta com esse e-mail, enviamos um link para redefinir a senha.", "ok"); }
+  catch(x){ aviso("msg", erroAuth(x), "err"); }
+};
+ACT.reenviar = async () => {
+  try{ await sendEmailVerification(auth.currentUser); aviso("msg2", "E-mail reenviado.", "ok"); }
+  catch(x){ aviso("msg2", erroAuth(x), "err"); }
+};
+ACT.jaconfirmei = async () => {
+  try{
+    await auth.currentUser.reload(); await auth.currentUser.getIdToken(true);
+    if(auth.currentUser.emailVerified) startApp(auth.currentUser); else aviso("msg2", "Ainda não confirmado. Clique no link do e-mail e tente de novo.", "err");
+  }catch(x){ aviso("msg2", erroAuth(x), "err"); }
+};
+ACT.sair = () => signOut(auth);
+ACT.google = async () => {
+  try{ const p = new GoogleAuthProvider(); p.setCustomParameters({prompt:"select_account"}); await signInWithPopup(auth, p); }
+  catch(x){ if(x.code === "auth/popup-closed-by-user" || x.code === "auth/cancelled-popup-request") return; aviso("msg", erroAuth(x), "err"); }
+};
+
+/* ===== 5. ESTADO DO APP ===== */
+let U = null, P = null, isMod = false, tab = 0, filtro = "Todas", mOpen = false, fOpen = false, avisoOk = "", erro = "", sSec = "Vacinação", dirty = false;
+let pubMap = {}, meusMap = {}, gastos = [], unsubs = [], draft = {};
+const TABS = [["Mural","📢"],["Finanças","💰"],["Saúde","🌿"],["Perfil","👤"]];
+const CATS = ["Festa","Trabalho autônomo","Processo seletivo","Outros"];
+const FCATS = ["Alimentação","Transporte","Moradia","Lazer","Estudos","Outros"];
+
+onAuthStateChanged(auth, user => {
+  unsubs.forEach(f => f()); unsubs = []; started = null; U = null; P = null; isMod = false;
+  pubMap = {}; meusMap = {}; gastos = []; draft = {};
+  if(!user){ show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden"); $("senha").value = ""; return; }
+  if(!emailValido((user.email || "").toLowerCase())){
+    signOut(auth); show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden");
+    aviso("msg", "Essa conta não é de uma universidade pública paulista. Use o e-mail institucional.", "err"); return;
+  }
+  if(!user.emailVerified){
+    $("sentTo").textContent = user.email; $("msg2").className = "msg";
+    $("formCard").classList.add("hidden"); $("verCard").classList.remove("hidden"); show("auth"); return;
+  }
+  startApp(user);
+});
+
+async function startApp(user){
+  if(started === user.uid) return;
+  started = user.uid; U = user; show("load");
+  try{
+    const ref = doc(db, "users", user.uid), snap = await getDoc(ref);
+    if(snap.exists()) P = snap.data();
+    else { P = {email:user.email.toLowerCase(), universidade:UNIS[uniKey(user.email)] || "Universidade", role:"aluno", criadoEm:serverTimestamp()}; await setDoc(ref, P); }
+    isMod = P.role === "moderador";
+    const onErr = x => { erro = erroAuth(x); renderCur(); };
+    const grab = (map, set) => s => { const m = {}; s.forEach(d => m[d.id] = {id:d.id, ...d.data()}); set(m); renderCur(); };
+    if(isMod) unsubs.push(onSnapshot(collection(db,"posts"), grab(0, m => pubMap = m), onErr));
+    else {
+      unsubs.push(onSnapshot(query(collection(db,"posts"), where("status","==","aprovado")), grab(0, m => pubMap = m), onErr));
+      unsubs.push(onSnapshot(query(collection(db,"posts"), where("autorUid","==",user.uid)), grab(0, m => meusMap = m), onErr));
+    }
+    unsubs.push(onSnapshot(collection(db,"users",user.uid,"gastos"), s => { gastos = s.docs.map(d => ({id:d.id, ...d.data()})); renderCur(); }, onErr));
+    show("home"); aba(0);
+  }catch(x){ show("auth"); $("formCard").classList.remove("hidden"); $("verCard").classList.add("hidden"); aviso("msg", erroAuth(x), "err"); signOut(auth); }
+}
+
+/* ===== 6. TELA PRINCIPAL ===== */
+$("nav").innerHTML = TABS.map((t,i) => `<button data-a="aba" data-v="${i}"><span>${t[1]}</span>${t[0]}</button>`).join("");
+function aba(i){ tab = i; draft = {}; erro = ""; avisoOk = ""; delConfirm = false; renderCur(true); }
+ACT.aba = v => aba(+v);
+function setScreen(h){
+  const ids = ["pt","pc","px","fd","fv","fc","pn"];
+  ids.forEach(i => { const el = $(i); if(el) draft[i] = el.value; });
+  $("screen").innerHTML = h;
+  ids.forEach(i => { const el = $(i); if(el && draft[i] != null) el.value = draft[i]; });
+  [...$("nav").children].forEach((b,j) => b.classList.toggle("on", j === tab));
+}
+function renderCur(force){
+  if(!U || $("home").classList.contains("hidden")) return;
+  const a = document.activeElement;
+  if(!force && a && $("screen").contains(a) && /INPUT|TEXTAREA|SELECT/.test(a.tagName)){ dirty = true; return; }
+  dirty = false;
+  [renderMural, renderFin, renderSaude, renderPerfil][tab]();
+}
+$("screen").addEventListener("focusout", () => { if(dirty) setTimeout(() => dirty && renderCur(), 300); });
+
+/* ===== 7. MURAL (compartilhado, com moderação real) ===== */
+let editId = null, delConfirm = false;
+const todos = () => Object.values({...pubMap, ...meusMap});
+const autorTxt = p => (p.autorNome || (p.autorUni ? "Aluno(a) " + p.autorUni : "Aluno(a)")) + (isMod && p.autorUid ? " · id " + p.autorUid.slice(0,6) : "");
+function cartao(p){
+  const own = p.autorUid === U.uid;
+  const badge = p.status === "pendente" ? '<span class="badge wait">Aguardando aprovação</span>' : p.status === "recusado" ? '<span class="badge wait">Recusada</span>' : "";
+  const mod = isMod && p.status === "pendente" ? `<button class="sm ok" data-a="decide" data-v="${p.id}|aprovado">Aprovar</button><button class="sm no" data-a="decide" data-v="${p.id}|recusado">Recusar</button>` : "";
+  const edit = own ? `<button class="sm gh" data-a="pedit" data-v="${p.id}">Editar</button>` : "";
+  const del = (own || isMod) ? `<button class="sm ${own ? "gh" : "no"}" data-a="pdel" data-v="${p.id}">${own ? "Apagar" : "Remover"}</button>` : "";
+  const acts = (mod || edit || del) ? `<div class="acts">${mod}${edit}${del}</div>` : "";
+  return `<div class="post"><div><span class="badge">${esc(p.cat)}</span>${badge}</div><h3>${esc(p.titulo)}</h3><p>${esc(p.texto)}</p><small>${esc(autorTxt(p))} · ${fmt(p.data)}</small>${acts}</div>`;
+}
+function renderMural(){
+  const lista = todos().filter(p => filtro === "Todas" || p.cat === filtro).sort((a,b) => toDate(b.data) - toDate(a.data));
+  const pend = todos().filter(p => p.status === "pendente").length;
+  setScreen(`<div class="mh"><h2>📢 Mural</h2><button class="sm" data-a="mform">${mOpen ? "Cancelar" : "+ Nova postagem"}</button></div>
+  ${isMod ? `<div class="msg ok" style="display:block">Você é moderador · ${pend} aguardando aprovação</div>` : ""}
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${!mOpen && erro ? `<div class="msg err">${erro}</div>` : ""}
+  ${mOpen ? `<div class="pform">${editId ? '<small class="hint">Ao salvar, a postagem volta para a fila de aprovação.</small>' : ""}<label for="pt">Título</label><input id="pt" maxlength="60">
+    <label for="pc">Categoria</label><select id="pc">${CATS.map(c => `<option>${c}</option>`).join("")}</select>
+    <label for="px">Texto</label><textarea id="px" maxlength="300"></textarea>
+    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="menviar">${editId ? "Salvar e reenviar para aprovação" : "Enviar para aprovação"}</button></div>` : ""}
+  <div class="chips">${["Todas",...CATS].map(c => `<button class="chip ${c===filtro?"on":""}" data-a="filtro" data-v="${c}">${c}</button>`).join("")}</div>
+  ${lista.length ? lista.map(cartao).join("") : "<div class='soon'>Nenhuma postagem aqui ainda.</div>"}`);
+}
+ACT.filtro = v => { filtro = v; avisoOk = ""; renderCur(true); };
+ACT.mform = () => { mOpen = !mOpen; editId = null; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
+ACT.decide = async v => { const [id, st] = v.split("|"); try{ await updateDoc(doc(db,"posts",id), {status:st}); }catch(x){ erro = erroAuth(x); renderCur(true); } };
+ACT.pedit = v => {
+  const p = todos().find(x => x.id === v); if(!p) return;
+  editId = v; mOpen = true; erro = ""; avisoOk = "";
+  draft = {pt:p.titulo, pc:p.cat, px:p.texto};
+  ["pt","pc","px"].forEach(i => { const el = $(i); if(el) el.value = draft[i]; });
+  renderCur(true);
+};
+ACT.pdel = async v => {
+  const p = todos().find(x => x.id === v); if(!p) return;
+  if(!confirm(p.autorUid === U.uid ? "Apagar esta postagem?" : "Remover esta postagem do mural?")) return;
+  try{ await deleteDoc(doc(db,"posts",v)); avisoOk = "Postagem removida."; erro = ""; }
+  catch(x){ erro = erroAuth(x); avisoOk = ""; }
+  renderCur(true);
+};
+ACT.menviar = async () => {
+  const t = $("pt").value.trim(), x = $("px").value.trim(), c = $("pc").value;
+  if(t.length < 3 || x.length < 10){ erro = "Preencha o título (mín. 3 letras) e o texto (mín. 10 letras)."; return renderCur(true); }
+  try{
+    if(editId){
+      await updateDoc(doc(db,"posts",editId), {titulo:t, texto:x, cat:c, status:"pendente"});
+      avisoOk = "Postagem atualizada! Ela volta para a fila e aparece de novo depois da aprovação.";
+    } else {
+      await addDoc(collection(db,"posts"), {titulo:t, texto:x, cat:c, autorUid:U.uid, autorNome:P.nome || "", autorUni:P.universidade, status:"pendente", data:serverTimestamp()});
+      avisoOk = "Postagem enviada! Ela aparece para todos depois que um moderador aprovar.";
+    }
+    mOpen = false; erro = ""; draft = {}; editId = null;
+  }catch(e){ erro = erroAuth(e); }
+  renderCur(true);
+};
+
+/* ===== 8. FINANÇAS (privadas: cada aluno vê só os seus gastos) ===== */
+function renderFin(){
+  const lista = [...gastos].sort((a,b) => toDate(b.data) - toDate(a.data));
+  const total = lista.reduce((a,g) => a + g.valor, 0);
+  const porCat = FCATS.map(c => [c, lista.filter(g => g.cat === c).reduce((a,g) => a + g.valor, 0)]).filter(x => x[1] > 0).sort((a,b) => b[1] - a[1]);
+  setScreen(`<div class="mh"><h2>💰 Finanças</h2><button class="sm" data-a="fform">${fOpen ? "Cancelar" : "+ Novo gasto"}</button></div>
+  <div class="saldo"><small>Total gasto (registrado)</small><b>${brl(total)}</b></div>
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${!fOpen && erro ? `<div class="msg err">${erro}</div>` : ""}
+  ${fOpen ? `<div class="pform"><label for="fd">Descrição</label><input id="fd" maxlength="40" placeholder="Ex.: Lanche">
+    <label for="fv">Valor (R$)</label><input id="fv" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0,00">
+    <label for="fc">Categoria</label><select id="fc">${FCATS.map(c => `<option>${c}</option>`).join("")}</select>
+    ${erro ? `<div class="msg err">${erro}</div>` : ""}<button class="btn" data-a="fsalvar">Salvar gasto</button></div>` : ""}
+  <label>Por categoria</label>
+  ${porCat.length ? porCat.map(([c,v]) => `<div class="bar"><span>${c}</span><div class="trk"><i style="width:${Math.round(v/total*100)}%"></i></div><b>${brl(v)}</b></div>`).join("") : "<div class='soon'>Nenhum gasto ainda.</div>"}
+  <label>Gastos recentes</label>
+  ${lista.map(g => `<div class="hrow"><span>${esc(g.desc)}<br><small style="color:var(--muted)">${fmt(g.data)} · ${esc(g.cat)}</small></span><span><b style="color:var(--text)">− ${brl(g.valor)}</b><button class="x" aria-label="Apagar gasto" data-a="fdel" data-v="${g.id}">✕</button></span></div>`).join("")}`);
+}
+ACT.fform = () => { fOpen = !fOpen; erro = ""; avisoOk = ""; draft = {}; renderCur(true); };
+ACT.fdel = async v => { try{ await deleteDoc(doc(db,"users",U.uid,"gastos",v)); }catch(x){ erro = erroAuth(x); renderCur(true); } };
+ACT.fsalvar = async () => {
+  const d = $("fd").value.trim(), v = parseFloat(String($("fv").value).replace(",", ".")), c = $("fc").value;
+  if(d.length < 2 || !(v > 0 && v <= 100000)){ erro = "Informe uma descrição e um valor maior que zero."; return renderCur(true); }
+  try{ await addDoc(collection(db,"users",U.uid,"gastos"), {desc:d, valor:Math.round(v*100)/100, cat:c, data:serverTimestamp()}); fOpen = false; erro = ""; draft = {}; avisoOk = "Gasto registrado!"; }
+  catch(e){ erro = erroAuth(e); }
+  renderCur(true);
+};
+
+/* ===== 9. SAÚDE (conteúdo informativo; itens "exemplo" devem ser trocados por dados oficiais) ===== */
+const SAUDE = {
+  "Vacinação":[{t:"Mantenha a caderneta em dia",x:"Confira quais vacinas estão pendentes e procure uma UBS para atualizar. Leve um documento com foto e a caderneta de vacinação, se tiver."},{t:"Campanha de vacinação do semestre",x:"Aqui vão as datas e os locais das campanhas na universidade e na região.",ex:1}],
+  "UBSs":[{t:"Encontre a UBS mais próxima",x:"As Unidades Básicas de Saúde atendem gratuitamente pelo SUS. Leve documento com foto e, se tiver, o Cartão SUS.",link:"https://www.google.com/maps/search/UBS+perto+de+mim"}],
+  "Rodas de conversa":[{t:"Roda de conversa: ansiedade e rotina acadêmica",x:"Encontro aberto aos estudantes, promovido pela universidade. Data e local a definir.",ex:1},{t:"Roda de conversa: primeiros passos na vida adulta",x:"Troca de experiências sobre moradia, dinheiro e organização do tempo.",ex:1}],
+  "Apoio emocional":[{t:"CVV – 188",x:"Apoio emocional gratuito, 24 horas por dia, por telefone.",tel:"188"},{t:"SAMU – 192",x:"Para emergências de saúde, ligue na hora.",tel:"192"},{t:"USP – Escritório de Saúde Mental",uni:"USP",x:"Ligado à Reitoria, oferece acolhimento psicológico voltado a orientação e prevenção. O atendimento é na Superintendência de Assistência Social (SAS), na Cidade Universitária.",link:"https://sites.usp.br/esm/formulario-do-esm/",lk:"Formulário do ESM"},
+    {t:"Unicamp – SAPPE",uni:"Unicamp",x:"Serviço de Assistência Psicológica e Psiquiátrica ao Estudante, para alunos de graduação e pós-graduação. Contato: sappeass@unicamp.br ou (19) 3521-6643.",link:"mailto:sappeass@unicamp.br",lk:"Enviar e-mail",tel:"1935216643",tl:"(19) 3521-6643"},
+    {t:"Unesp – NTAPS",uni:"Unesp",x:"O Núcleo Técnico de Atenção Psicossocial oferece acolhimento psicossocial a estudantes de graduação e pós-graduação de todas as unidades. Procure também a Seção Técnica de Saúde do seu câmpus."},
+    {t:"UFABC – Seção Psicossocial (ProAP)",uni:"UFABC",x:"A Pró-Reitoria de Assuntos Comunitários e Políticas Afirmativas tem uma seção psicossocial para a comunidade. Veja formas de contato e horários no site da ProAP.",link:"https://proap.ufabc.edu.br",lk:"Site da ProAP"},
+    {t:"Outras instituições",x:"Unifesp, UFSCar, IFSP, Univesp e Fatec: procure o setor de assuntos estudantis da sua instituição para saber do acolhimento psicológico."},
+    {t:"Confira sempre o site oficial",x:"Serviços, horários e contatos mudam. Antes de contar com um deles, confirme no site da sua universidade."}]
+};
+function renderSaude(){
+  setScreen(`<h2>🌿 Saúde e bem-estar</h2>
+  <div class="chips" style="margin-top:10px">${Object.keys(SAUDE).map(s => `<button class="chip ${s===sSec?"on":""}" data-a="ssec" data-v="${s}">${s}</button>`).join("")}</div>
+  ${[...SAUDE[sSec]].sort((a,b) => (b.uni === P.universidade) - (a.uni === P.universidade)).map(c => `<div class="post"><h3 style="margin-top:0">${c.t}${c.ex ? ' <span class="badge ex">exemplo</span>' : ""}</h3><p>${c.x}</p>
+    ${c.link ? `<a class="sm" href="${c.link}" target="_blank" rel="noopener">${c.lk || "Buscar no mapa"}</a>` : ""}${c.tel ? `<a class="sm" href="tel:${c.tel}">Ligar ${c.tl || c.tel}</a>` : ""}</div>`).join("")}`);
+}
+ACT.ssec = v => { sSec = v; renderCur(true); };
+
+/* ===== 10. PERFIL ===== */
+function renderPerfil(){
+  const e = U.email.toLowerCase(), meus = todos().filter(p => p.autorUid === U.uid).length;
+  setScreen(`<h2>👤 Perfil</h2><div class="avatar">${esc(e[0].toUpperCase())}</div>
+  <p style="text-align:center;margin:0"><b>${esc(e)}</b><br><small style="color:var(--muted)">${esc(P.universidade)} · ${isMod ? "Moderador" : "Aluno"}</small></p>
+  <label for="pn">Nome de exibição (aparece nas suas postagens)</label>
+  <input id="pn" maxlength="40" placeholder="Ex.: Eduardo (ou deixe vazio)" value="${esc(P.nome || "")}">
+  <small class="hint">Se deixar vazio, aparece só “Aluno(a) ${esc(P.universidade)}”. Seu e-mail nunca aparece para outros alunos.</small>
+  ${avisoOk ? `<div class="msg ok">${avisoOk}</div>` : ""}${erro ? `<div class="msg err">${erro}</div>` : ""}
+  <button class="btn" style="margin-top:12px" data-a="salvarnome">Salvar nome</button>
+  <label>Resumo</label>
+  <div class="hrow"><span>Postagens no mural</span><b>${meus}</b></div>
+  <div class="hrow"><span>Gastos registrados</span><b>${gastos.length}</b></div>
+  <button class="btn" style="background:var(--card);color:var(--text);border:1px solid var(--border)" data-a="sair">Sair da conta</button>
+  <div class="row" style="margin-top:14px"><button class="link" data-a="priv">Política de privacidade</button><button class="link" style="color:var(--error)" data-a="delask">Excluir minha conta</button></div>
+  ${delConfirm ? `<div class="msg err" style="display:block">Isso apaga seu perfil, seus gastos e suas postagens, e não dá para desfazer.<div class="acts"><button class="sm no" data-a="delyes">Sim, excluir tudo</button><button class="sm gh" data-a="delno">Cancelar</button></div></div>` : ""}`);
+}
+
+ACT.salvarnome = async () => {
+  const n = $("pn").value.trim().slice(0, 40);
+  try{ await updateDoc(doc(db,"users",U.uid), {nome:n}); P.nome = n; avisoOk = "Nome salvo!"; erro = ""; }
+  catch(x){ erro = erroAuth(x); avisoOk = ""; }
+  renderCur(true);
+};
+
+ACT.priv = () => show("priv");
+ACT.privVoltar = () => show(lastView);
+ACT.delask = () => { delConfirm = true; erro = ""; avisoOk = ""; renderCur(true); };
+ACT.delno = () => { delConfirm = false; renderCur(true); };
+ACT.delyes = async () => {
+  const last = Date.parse(U.metadata.lastSignInTime || "");
+  if(!last || Date.now() - last > 4 * 60 * 1000){ delConfirm = false; erro = "Por segurança, saia da conta, entre de novo e exclua a conta em até 4 minutos."; return renderCur(true); }
+  try{
+    const apagar = async snap => { for(const d of snap.docs) await deleteDoc(d.ref); };
+    await apagar(await getDocs(collection(db,"users",U.uid,"gastos")));
+    await apagar(await getDocs(query(collection(db,"posts"), where("autorUid","==",U.uid))));
+    await deleteDoc(doc(db,"users",U.uid));
+    await deleteUser(auth.currentUser);
+    aviso("msg", "Sua conta e seus dados foram excluídos.", "ok");
+  }catch(x){
+    delConfirm = false;
+    erro = x.code === "auth/requires-recent-login" ? "Por segurança, saia da conta, entre de novo e tente excluir de novo." : erroAuth(x);
+    renderCur(true);
+  }
+};
+
+/* Permite instalar o app na tela inicial (PWA) */
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+
+/* ===== 11. EVENTOS (um único ouvinte de cliques) ===== */
+document.addEventListener("click", e => { const b = e.target.closest("[data-a]"); if(b && ACT[b.dataset.a]) ACT[b.dataset.a](b.dataset.v, b); });
+</script>
+</body>
+</html>
