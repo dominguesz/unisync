@@ -53,6 +53,12 @@ export async function createAdapter(onData,onAuth,onError){
       createPost:async x=>{data.posts.unshift({id:makeId(),authorId:current,...x,status:'aprovado',createdAt:Date.now()});save();},
       socialStatus:async(id,status)=>{const p=data.posts.find(x=>x.id===id);if(p){p.status=status;save();}},
       socialDelete:async id=>{data.posts=data.posts.filter(x=>x.id!==id);save();},
+       saveGymReview:async x=>{const id=x.gymId+'_'+current,o=data.gymReviews.find(z=>z.id===id);if(o)Object.assign(o,{rating:x.rating,feedback:x.feedback,updatedAt:Date.now()});else data.gymReviews.push({id,userId:current,gymId:x.gymId,rating:x.rating,feedback:x.feedback,createdAt:Date.now(),updatedAt:Date.now()});save();},
+       deleteGymReview:async gymId=>{data.gymReviews=data.gymReviews.filter(z=>z.id!==gymId+'_'+current);save();},
+       saveRsvp:async x=>{const id=x.postId+'_'+current,o=data.rsvps.find(z=>z.id===id);if(o)Object.assign(o,{choice:x.choice,visible:x.visible,updatedAt:Date.now()});else data.rsvps.push({id,postId:x.postId,userId:current,choice:x.choice,visible:x.visible,createdAt:Date.now(),updatedAt:Date.now()});save();},
+       removeRsvp:async postId=>{data.rsvps=data.rsvps.filter(z=>z.id!==postId+'_'+current);save();},
+       reportPost:async x=>{const id=x.postId+'_'+current;if(data.reports.some(z=>z.id===id))throw Error('Você já denunciou esta publicação.');data.reports.push({id,postId:x.postId,reporterId:current,reason:x.reason,details:x.details,status:'open',createdAt:Date.now()});save();},
+       reviewReport:async id=>{const x=data.reports.find(z=>z.id===id);if(x)x.status='reviewed';save();},
       comment:async(postId,text)=>{data.comments.push({id:makeId(),postId,authorId:current,text,createdAt:Date.now()});save();},
       createShare:async x=>{const id=makeId();data.shares.push({id,...x,authorId:current,createdAt:Date.now()});save();return id;},
       markRoomRead:async roomId=>{const id=roomId+'_'+current,nowRead=Date.now(),r=data.receipts.find(x=>x.id===id);if(r)r.lastReadAt=nowRead;else data.receipts.push({id,roomId,userId:current,lastReadAt:nowRead});save();},
@@ -68,7 +74,7 @@ export async function createAdapter(onData,onAuth,onError){
       uploadImage:async file=>resizeDataUrl(file),
       resetDemo:async()=>{data=sample();save();}
     };
-    onData('legacyRole','aluno');if(!data.legacyPosts)data.legacyPosts=[];if(!data.expenses)data.expenses=[];if(!data.follows)data.follows=[];if(!data.commentLikes)data.commentLikes=[];if(!data.shares)data.shares=[];if(!data.receipts)data.receipts=[];notify();onData('legacyMine',data.legacyPosts);return api;
+    onData('legacyRole','aluno');if(!data.legacyPosts)data.legacyPosts=[];if(!data.expenses)data.expenses=[];if(!data.follows)data.follows=[];if(!data.commentLikes)data.commentLikes=[];if(!data.shares)data.shares=[];if(!data.receipts)data.receipts=[];if(!data.gymReviews)data.gymReviews=[];if(!data.rsvps)data.rsvps=[];if(!data.reports)data.reports=[];notify();onData('legacyMine',data.legacyPosts);return api;
   }
   const [{initializeApp},{getAuth,onAuthStateChanged,signInWithPopup,GoogleAuthProvider,createUserWithEmailAndPassword,signInWithEmailAndPassword,sendEmailVerification,sendPasswordResetEmail,signOut},{getFirestore,collection,doc,getDoc,setDoc,addDoc,updateDoc,deleteDoc,onSnapshot,query,where,limit,serverTimestamp,arrayUnion},{getStorage,ref,uploadBytes,getDownloadURL}] = await Promise.all([
     import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
@@ -107,6 +113,14 @@ export async function createAdapter(onData,onAuth,onError){
       const globalRef=doc(db,col.rooms,'ufabc-global');
       try{const global=await getDoc(globalRef);if(!global.exists())await setDoc(globalRef,{name:'UFABC',description:'Chat global aberto a todos os estudantes do UniSync.',visibility:'public',kind:'group',ownerId:u.uid,members:[u.uid],createdAt:serverTimestamp()});}catch(e){console.warn('Chat UFABC: '+e.message);}
       for (const name of ['profiles','comments','likes','follows','commentLikes','shares']) listen(name,query(collection(db,col[name]),limit(400)));
+       listen('gymReviews',query(collection(db,'v14_gym_reviews'),limit(400)));
+       // Confirmações privadas não podem ser listadas por terceiros.
+       // Consultas separadas: visíveis à comunidade + as do próprio usuário.
+       let publicRsvps=[],mineRsvps=[];
+       const notifyRsvps=()=>onData('rsvps',[...new Map([...publicRsvps,...mineRsvps].map(x=>[x.id,x])).values()]);
+       unsubs.push(onSnapshot(query(collection(db,'v14_event_rsvps'),where('visible','==',true),limit(400)),snap=>{publicRsvps=snap.docs.map(d=>({id:d.id,...d.data()}));notifyRsvps();},e=>onError('Confirmações públicas: '+e.message)));
+       unsubs.push(onSnapshot(query(collection(db,'v14_event_rsvps'),where('userId','==',u.uid),limit(400)),snap=>{mineRsvps=snap.docs.map(d=>({id:d.id,...d.data()}));notifyRsvps();},e=>onError('Suas confirmações: '+e.message)));
+       if(legacy.role==='moderador')listen('reports',query(collection(db,'v14_reports'),limit(300)));else onData('reports',[]);
       // Consultas separadas para publicações aprovadas, do autor e dos moderadores.
       let publicPosts=[],ownPosts=[],reviewPosts=[];
       const notifyPosts=()=>onData('posts',[...new Map([...publicPosts,...ownPosts,...reviewPosts].map(post=>[post.id,post])).values()]);
@@ -141,6 +155,12 @@ export async function createAdapter(onData,onAuth,onError){
     createPost:async x=>{await addDoc(collection(db,col.posts),{...x,authorId:requireUser(),status:'aprovado',createdAt:serverTimestamp()});},
     socialStatus:async(id,status)=>updateDoc(doc(db,col.posts,id),{status}),
     socialDelete:async id=>deleteDoc(doc(db,col.posts,id)),
+     saveGymReview:async x=>{const uid=requireUser(),id=x.gymId+'_'+uid,ref=doc(db,'v14_gym_reviews',id),old=await getDoc(ref);if(old.exists())await updateDoc(ref,{rating:x.rating,feedback:x.feedback,updatedAt:serverTimestamp()});else await setDoc(ref,{userId:uid,gymId:x.gymId,rating:x.rating,feedback:x.feedback,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});},
+     deleteGymReview:async gymId=>deleteDoc(doc(db,'v14_gym_reviews',gymId+'_'+requireUser())),
+     saveRsvp:async x=>{const uid=requireUser(),id=x.postId+'_'+uid,ref=doc(db,'v14_event_rsvps',id),old=await getDoc(ref);if(old.exists())await updateDoc(ref,{choice:x.choice,visible:x.visible,updatedAt:serverTimestamp()});else await setDoc(ref,{postId:x.postId,userId:uid,choice:x.choice,visible:x.visible,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});},
+     removeRsvp:async postId=>deleteDoc(doc(db,'v14_event_rsvps',postId+'_'+requireUser())),
+     reportPost:async x=>{const uid=requireUser();await setDoc(doc(db,'v14_reports',x.postId+'_'+uid),{postId:x.postId,reporterId:uid,reason:x.reason,details:x.details,status:'open',createdAt:serverTimestamp()});},
+     reviewReport:async id=>updateDoc(doc(db,'v14_reports',id),{status:'reviewed'}),
     comment:async(postId,text)=>{await addDoc(collection(db,col.comments),{postId,text,authorId:requireUser(),createdAt:serverTimestamp()});},
     createShare:async x=>{const uid=requireUser();const share=await addDoc(collection(db,col.shares),{sourceType:x.sourceType,originalId:x.originalId,note:String(x.note||'').slice(0,600),authorId:uid,createdAt:serverTimestamp()});return share.id;},
     markRoomRead:async roomId=>{if(!roomId)return;const uid=requireUser();await setDoc(doc(db,col.receipts,roomId+'_'+uid),{roomId,userId:uid,lastReadAt:serverTimestamp()},{merge:true});},
