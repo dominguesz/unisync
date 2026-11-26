@@ -1,8 +1,8 @@
 {
   "name": "UniSync",
   "short_name": "UniSync",
-  "description": "Seu guia na transição para a vida adulta",
-  "start_url": "./",
+  "description": "Comunidade universitária UniSync: conexões, saúde, estudos e oportunidades.",
+  "start_url": "./social-v12/",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -10,7 +10,18 @@
   "theme_color": "#0F1A2B",
   "lang": "pt-BR",
   "icons": [
-    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
-    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
-  ]
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "./social-v12/"
 }
