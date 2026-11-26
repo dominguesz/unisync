@@ -11,10 +11,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="stylesheet" href="./features14.css?v=15" />
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <style>
+  .us-install-link{display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;color:var(--violet,#0b6fc2);background:var(--white,#fff);border:1px solid var(--line,#dbe6f1);padding:9px 12px;border-radius:12px;font:600 12px Inter,system-ui,sans-serif;white-space:nowrap}
+  .us-install-link:hover,.us-install-link:focus-visible{outline:2px solid var(--violet,#0b6fc2);outline-offset:2px}.auth-card .us-install-link{margin:0 0 10px;width:100%;box-sizing:border-box}.topbar-right .us-install-link{flex-shrink:0}.topbar-right .us-install-link svg{flex-shrink:0}
+  @media(max-width:620px){.topbar-right .us-install-link{width:36px;height:36px;padding:0}.topbar-right .us-install-link span{display:none}}
+  </style>
 </head>
 <body>
   <div id="app"><div class="boot"><div class="spin"></div><strong>UniSync</strong><span>Preparando a comunidade...</span></div></div>
   <script src="./firebase-config.js"></script>
-  <script type="module" src="./app.js?v=15"></script>
+  <script type="module" src="./app.js?v=15apk1"></script>
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('../sw.js').catch(console.warn);}</script>
 </body>
 </html>
